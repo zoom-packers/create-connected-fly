@@ -63,6 +63,7 @@ public final class CreateConnectedGameTests {
     static {
         test("content_registered", CreateConnectedGameTests::contentRegistered, 20);
         test("creative_tab_builds", CreateConnectedGameTests::creativeTabBuilds, 20);
+        test("block_state_caches_built", CreateConnectedGameTests::blockStateCachesBuilt, 20);
         test("recipe_conditions", CreateConnectedGameTests::recipeConditions, 20);
         test("item_silo_item_capability", CreateConnectedGameTests::itemSiloItemCapability, 40);
         test("fan_catalyst_blasting", CreateConnectedGameTests::fanCatalystBlasting, 20);
@@ -141,6 +142,28 @@ public final class CreateConnectedGameTests {
                 .findFirst().orElse(ItemStack.EMPTY);
         helper.assertFalse(battery.isEmpty(), "creative tab is missing the kinetic battery");
         CreateConnected.LOGGER.info("creative_tab_builds: {} items", tab.getDisplayItems().size());
+        helper.succeed();
+    }
+
+    /**
+     * CreateConnected.initBlockStateCaches ran: every Connected block state has its cached occlusion shape and fluid
+     * state (null when initCache never ran on it).
+     */
+    private static void blockStateCachesBuilt(GameTestHelper helper) {
+        List<String> uncached = new java.util.ArrayList<>();
+        int states = 0;
+        for (var block : BuiltInRegistries.BLOCK) {
+            if (!BuiltInRegistries.BLOCK.getKey(block).getNamespace().equals(CreateConnected.MODID))
+                continue;
+            for (var state : block.getStateDefinition().getPossibleStates()) {
+                states++;
+                if (state.getOcclusionShape() == null || state.getFluidState() == null)
+                    uncached.add(state.toString());
+            }
+        }
+        helper.assertTrue(uncached.isEmpty(), uncached.size() + " block states without caches, e.g. "
+                + uncached.stream().limit(5).toList());
+        CreateConnected.LOGGER.info("block_state_caches_built: {} states", states);
         helper.succeed();
     }
 

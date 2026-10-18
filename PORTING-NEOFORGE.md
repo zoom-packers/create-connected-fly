@@ -71,8 +71,14 @@ before mods are constructed. The Create port registers its own content there (a 
 point and fan processing types. The client entrypoint also binds renderers and models to registry objects at
 construction. So Connected registers in the same window: `mixin/BuiltInRegistriesMixin` calls
 `CreateConnected.registerContent()` at the first `Registry.freeze()` call inside `BuiltInRegistries.freeze()`, which is
-after Create's HEAD hook and before anything is frozen. NeoForge's block callbacks build the block-state caches for these
-blocks at bake time.
+after Create's HEAD hook and before anything is frozen.
+
+**Connected builds its own block-state caches.** Vanilla calls `initCache()` on every state at the end of
+`Blocks.<clinit>`, where Create also registers its blocks. NeoForge does it at registry bake, but only for blocks its
+BLOCK callback saw added, and it attaches that callback at `ModifyRegistriesEvent`, after bootstrap. Connected
+registers between the two, so `registerContent()` ends with `initBlockStateCaches()`, which runs that loop over its
+own namespace. Up to zp5.2 every Connected state kept null caches (5886 states): MoreCulling's resource reload
+threw "voxelShape is null" on the copycat fence and fence gate, and fluid state and solid render were wrong.
 
 **Block items fill `Item.BY_BLOCK` themselves.** NeoForge adds the ITEM registry callback that maps blocks to their
 items only at `ModifyRegistriesEvent`, after bootstrap. Vanilla's `Items.registerItem` calls
@@ -150,7 +156,7 @@ mixins are applied, so the class is never transformed.
 2. `tools/check_mixins.py` against the patched MC, NeoForge universal and the Create port: 0 real problems. The three
    reports are `COMPATFenceBlockMixin` (`require = 0`, Diagonal Fences only), `COMPATPathNodeDefaultsMixin` (`@Pseudo`,
    Radium only) and an accessor-name quirk in the checker (`getCACHED_PARAMETERS`; the runtime log shows it applied).
-3. `./gradlew runGameTestServer`: all 12 required tests pass (11 before zp5.3):
+3. `./gradlew runGameTestServer`: all 13 required tests pass (11 before zp5.3):
    - `create:water_wheel_drives_press` (Create's own baseline);
    - `content_registered`: 94 blocks, 27 block entity types, Connected's arm point type, creative tab, copycats valid
      for `create:copycat`;
@@ -160,6 +166,7 @@ mixins are applied, so the class is never transformed.
    - `parallel_gearbox_propagates`: creative motor → parallel gearbox → shaft (16 rpm);
    - the Fabric port's battery/deployer and arm/basin tests (4).
    - `creative_tab_builds` (zp5.3): every tab entry resolves to an item, and the tab builds through NeoForge's hook.
+   - `block_state_caches_built` (zp5.3): every Connected block state has its cached occlusion shape and fluid state.
 4. The released jar on its own: a scratch MDG project with only the Create port jar, this jar and the gametest jar
    (`runtimeOnly`, no sources, so the jar's own ATs/mixins/metadata are what runs) passes the same 11 tests.
 

@@ -9,7 +9,10 @@ import com.hlysine.create_connected.foundation.registrate.CCRegistrate;
 import com.hlysine.create_connected.compat.SchematicRequirementFixes;
 import com.hlysine.create_connected.registries.*;
 import com.mojang.logging.LogUtils;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -102,6 +105,26 @@ public class CreateConnected {
 
         // Copycats+ and Additional Placements integrations are excluded from the build until
         // those mods exist on 26.3 -- see the sourceSets excludes in build.gradle.
+
+        initBlockStateCaches();
+    }
+
+    /**
+     * Builds the block-state caches (occlusion shapes, fluid state, solid render, ...) for Connected's blocks. Vanilla
+     * does this for every block at the end of {@code Blocks.<clinit>}, where Create also registers its own, and NeoForge
+     * does it at registry bake for blocks its callback saw added. Connected registers later in bootstrap than the first
+     * and before NeoForge attaches that callback, so neither covers it: every state kept null caches (MoreCulling's
+     * reload hit a null occlusion shape on the copycat fences). Registry order puts the wrapped_* blocks that copycats
+     * delegate to before the copycats.
+     */
+    private static void initBlockStateCaches() {
+        for (Block block : BuiltInRegistries.BLOCK) {
+            if (!BuiltInRegistries.BLOCK.getKey(block).getNamespace().equals(MODID))
+                continue;
+            for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+                state.initCache();
+            }
+        }
     }
 
     public static CCRegistrate getRegistrate() {
