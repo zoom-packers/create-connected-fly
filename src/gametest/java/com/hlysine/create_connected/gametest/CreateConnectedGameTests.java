@@ -21,6 +21,8 @@ import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -60,6 +62,7 @@ public final class CreateConnectedGameTests {
 
     static {
         test("content_registered", CreateConnectedGameTests::contentRegistered, 20);
+        test("creative_tab_builds", CreateConnectedGameTests::creativeTabBuilds, 20);
         test("recipe_conditions", CreateConnectedGameTests::recipeConditions, 20);
         test("item_silo_item_capability", CreateConnectedGameTests::itemSiloItemCapability, 40);
         test("fan_catalyst_blasting", CreateConnectedGameTests::fanCatalystBlasting, 20);
@@ -114,6 +117,30 @@ public final class CreateConnectedGameTests {
         helper.assertTrue(AllBlockEntityTypes.COPYCAT.isValid(CCBlocks.COPYCAT_BLOCK.get().defaultBlockState()),
                 "copycat_block is not valid for create:copycat");
         CreateConnected.LOGGER.info("content_registered: {} blocks, {} block entity types, {} arm point types", blocks, blockEntities, armPoints);
+        helper.succeed();
+    }
+
+    /**
+     * Every creative tab entry resolves to a real item, and the tab builds through NeoForge's
+     * BuildCreativeModeTabContentsEvent hook, which throws on any stack whose count isn't 1 (an air stack counts 0).
+     * The kinetic battery entry is listed with its full charge.
+     */
+    private static void creativeTabBuilds(GameTestHelper helper) {
+        List<Identifier> air = CCCreativeTabs.ITEMS.stream()
+                .filter(item -> item.asItem() == Items.AIR)
+                .map(item -> item.getId())
+                .toList();
+        helper.assertTrue(air.isEmpty(), "creative tab entries resolve to air: " + air);
+
+        CreativeModeTab tab = BuiltInRegistries.CREATIVE_MODE_TAB.getValueOrThrow(CCCreativeTabs.MAIN);
+        var level = helper.getLevel();
+        tab.buildContents(new CreativeModeTab.ItemDisplayParameters(level.enabledFeatures(), true, level.registryAccess()));
+        helper.assertTrue(tab.getDisplayItems().stream().noneMatch(ItemStack::isEmpty), "creative tab holds an empty stack");
+        ItemStack battery = tab.getDisplayItems().stream()
+                .filter(stack -> stack.is(CCBlocks.KINETIC_BATTERY.asItem()))
+                .findFirst().orElse(ItemStack.EMPTY);
+        helper.assertFalse(battery.isEmpty(), "creative tab is missing the kinetic battery");
+        CreateConnected.LOGGER.info("creative_tab_builds: {} items", tab.getDisplayItems().size());
         helper.succeed();
     }
 

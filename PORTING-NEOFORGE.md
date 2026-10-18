@@ -51,7 +51,7 @@ API surface here was small: 35 files, all lifecycle, networking, attachments, ev
 ## Build
 
 - ModDevGradle 2.0.148, NeoForge 26.3.0.89, Gradle 9.2.1, JDK 25. `./gradlew build` →
-  `build/libs/create_connected-1.3.3-zp5.1+neoforge-26.3.jar` and a sources jar.
+  `build/libs/create_connected-1.3.3-zp5.3+neoforge-26.3.jar` and a sources jar.
 - **The Create port is a file dependency.** It has no published build yet, so `libs/` (gitignored) holds
   `create-fly-neoforge-6.0.9+neoforge-26.3.jar` and `create-interfaces.json` (its `interfaces.json`). Copy both from
   ZP5 `mods/create-fly-neoforge` (`build/libs/` and the repo root) before building. Switch to a maven coordinate once the
@@ -73,6 +73,14 @@ construction. So Connected registers in the same window: `mixin/BuiltInRegistrie
 `CreateConnected.registerContent()` at the first `Registry.freeze()` call inside `BuiltInRegistries.freeze()`, which is
 after Create's HEAD hook and before anything is frozen. NeoForge's block callbacks build the block-state caches for these
 blocks at bake time.
+
+**Block items fill `Item.BY_BLOCK` themselves.** NeoForge adds the ITEM registry callback that maps blocks to their
+items only at `ModifyRegistriesEvent`, after bootstrap. Vanilla's `Items.registerItem` calls
+`BlockItem#registerBlocks(Item.BY_BLOCK, item)` itself, so `BlockBuilder` and `ItemBuilder` do the same before
+`Registry.register`. Up to zp5.2 they didn't, so every Connected block's `asItem()` was air: the creative tab threw
+"The stack count must be 1" (NeoForge's `EventHooks.onCreativeModeTabBuildContents`), and pick-block and
+`BlockEntry#asStack()` returned empty stacks. The item-only block items (vertical gearboxes, copycat box and catwalk,
+charged battery) override `registerBlocks` to stay out of the map, as upstream.
 
 A mixin on `Create.register()` itself does not work: Create's mixin plugin loads `com.zurrtum.create.Create` before
 mixins are applied, so the class is never transformed.
@@ -142,7 +150,7 @@ mixins are applied, so the class is never transformed.
 2. `tools/check_mixins.py` against the patched MC, NeoForge universal and the Create port: 0 real problems. The three
    reports are `COMPATFenceBlockMixin` (`require = 0`, Diagonal Fences only), `COMPATPathNodeDefaultsMixin` (`@Pseudo`,
    Radium only) and an accessor-name quirk in the checker (`getCACHED_PARAMETERS`; the runtime log shows it applied).
-3. `./gradlew runGameTestServer`: all 11 required tests pass:
+3. `./gradlew runGameTestServer`: all 12 required tests pass (11 before zp5.3):
    - `create:water_wheel_drives_press` (Create's own baseline);
    - `content_registered`: 94 blocks, 27 block entity types, Connected's arm point type, creative tab, copycats valid
      for `create:copycat`;
@@ -151,6 +159,7 @@ mixins are applied, so the class is never transformed.
    - `fan_catalyst_blasting`: Create's `FanProcessingType.getAt` sees the catalyst as blasting;
    - `parallel_gearbox_propagates`: creative motor → parallel gearbox → shaft (16 rpm);
    - the Fabric port's battery/deployer and arm/basin tests (4).
+   - `creative_tab_builds` (zp5.3): every tab entry resolves to an item, and the tab builds through NeoForge's hook.
 4. The released jar on its own: a scratch MDG project with only the Create port jar, this jar and the gametest jar
    (`runtimeOnly`, no sources, so the jar's own ATs/mixins/metadata are what runs) passes the same 11 tests.
 

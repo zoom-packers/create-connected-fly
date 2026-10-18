@@ -186,11 +186,13 @@ public final class BlockBuilder<T extends Block> implements NamedBuilder {
             Item.Properties itemProps = itemPropertyOps.apply(
                     new Item.Properties().useBlockDescriptionPrefix().setId(itemKey));
 
-            BlockItem item = Registry.register(
-                    BuiltInRegistries.ITEM,
-                    id,
-                    itemFactory.apply(block, itemProps)
-            );
+            BlockItem item = itemFactory.apply(block, itemProps);
+            // Connected registers during vanilla bootstrap, before NeoForge adds the ITEM registry callback that
+            // fills Item.BY_BLOCK (ModifyRegistriesEvent). Vanilla's Items.registerItem fills it itself at this
+            // stage, so do the same. Without it every block's asItem() is air: empty creative tab stacks
+            // ("The stack count must be 1"), pick-block and asStack().
+            item.registerBlocks(Item.BY_BLOCK, item);
+            Registry.register(BuiltInRegistries.ITEM, id, item);
             for (Consumer<BlockItem> callback : onItemRegister) {
                 callback.accept(item);
             }
