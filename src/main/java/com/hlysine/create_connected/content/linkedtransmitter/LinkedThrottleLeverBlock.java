@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.linkedtransmitter;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.server.level.ServerLevel;
 
 import com.hlysine.create_connected.registries.CCItems;
@@ -120,7 +121,7 @@ public class LinkedThrottleLeverBlock extends ThrottleLeverBlock implements Spec
     public InteractionResult onWrenched(BlockState state, UseOnContext context) {
         Player player = context.getPlayer();
         if (!player.isCreative()) {
-            player.getInventory().placeItemBackInInventory(new ItemStack(CCItems.LINKED_TRANSMITTER.get()));
+            player.getInventory().placeItemBackInInventory(new ItemStack(CCItems.LINKED_TRANSMITTER.get()), Prediction.SERVER_ONLY);
         }
         withBlockEntityDo(context.getLevel(), context.getClickedPos(), be -> ((LinkedThrottleLeverBlockEntity) be).containsBase = false);
         replaceWithBase(state, context.getLevel(), context.getClickedPos());

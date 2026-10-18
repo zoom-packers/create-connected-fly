@@ -3,7 +3,7 @@ package com.hlysine.create_connected.compat;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
-import net.fabricmc.loader.api.FabricLoader;
+import com.zurrtum.create.neoforge.Platform;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -57,7 +57,7 @@ public enum Mods {
      * @return a boolean of whether the mod is loaded or not based on mod id
      */
     public boolean isLoaded() {
-        return FabricLoader.getInstance().isModLoaded(id);
+        return Platform.isModLoaded(id);
     }
 
     /**

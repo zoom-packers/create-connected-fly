@@ -2,7 +2,7 @@ package com.hlysine.create_connected.mixin;
 
 import com.hlysine.create_connected.compat.ModMixin;
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.LoadingModList;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -57,12 +57,12 @@ public class MixinPlugin implements IMixinConfigPlugin {
 
     /**
      * Was {@code FMLLoader.getLoadingModList()}, which reads the list being assembled during
-     * loading. Fabric's loader is already queryable at mixin-plugin time, so this is a direct
-     * lookup instead.
+     * loading. NeoForge: {@code LoadingModList}, the same list, since {@code ModList} does not exist yet
+     * at mixin-plugin time.
      */
     private static boolean anyModsLoaded(List<String> mods) {
         for (String mod : mods) {
-            if (FabricLoader.getInstance().isModLoaded(mod)) return true;
+            if (LoadingModList.get().getModFileById(mod) != null) return true;
         }
         return false;
     }

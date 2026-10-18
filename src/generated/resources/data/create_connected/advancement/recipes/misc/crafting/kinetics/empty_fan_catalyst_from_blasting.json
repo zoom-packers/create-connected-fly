@@ -1,7 +1,7 @@
 {
-  "fabric:load_conditions": [
+  "neoforge:conditions": [
     {
-      "condition": "create_connected:feature_enabled",
+      "type": "create_connected:feature_enabled",
       "tag": "create_connected:empty_fan_catalyst"
     }
   ],
@@ -19,7 +19,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "create_connected:crafting/kinetics/empty_fan_catalyst_from_blasting"
+        "recipes": "create_connected:crafting/kinetics/empty_fan_catalyst_from_blasting"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

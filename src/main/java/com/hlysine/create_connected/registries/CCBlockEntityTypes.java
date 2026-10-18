@@ -47,7 +47,6 @@ import com.zurrtum.create.content.decoration.copycat.CopycatBlockEntity;
 import com.zurrtum.create.client.content.kinetics.crank.HandCrankRenderer;
 import com.zurrtum.create.client.content.kinetics.simpleRelays.BracketedKineticBlockEntityRenderer;
 import com.zurrtum.create.content.kinetics.simpleRelays.SimpleKineticBlockEntity;
-import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedCogVisual;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftRenderer;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftVisual;
 import com.zurrtum.create.client.content.logistics.chute.ChuteRenderer;
@@ -57,7 +56,7 @@ import com.hlysine.create_connected.foundation.registrate.CCRegistrate;
 import com.hlysine.create_connected.foundation.registrate.BlockEntityEntry;
 import com.hlysine.create_connected.foundation.registrate.BlockEntry;
 import com.zurrtum.create.AllBlockEntityTypes;
-import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType;
+import net.neoforged.neoforge.event.BlockEntityTypeAddBlocksEvent;
 
 import java.util.List;
 
@@ -200,10 +199,11 @@ public class CCBlockEntityTypes {
      * class, which took the type as a constructor argument. Create Fly's version hard-codes
      * {@code AllBlockEntityTypes.COPYCAT} instead, so a separate type is no longer expressible
      * without duplicating the whole class. Connected's copycat blocks join Create's type instead,
-     * through Fabric's {@code addValidBlock}.
+     * at NeoForge's mod-bus {@link BlockEntityTypeAddBlocksEvent} (Fabric: {@code addValidBlock}). The event's own
+     * {@code modify} refuses them (see {@code BlockEntityTypeAccessor}), so the set is replaced directly.
      */
-    private static void registerCopycatBlocks() {
-        FabricBlockEntityType copycat = (FabricBlockEntityType) (Object) AllBlockEntityTypes.COPYCAT;
+    public static void addCopycatBlocks(BlockEntityTypeAddBlocksEvent event) {
+        java.util.Set<net.minecraft.world.level.block.Block> blocks = new java.util.HashSet<>(AllBlockEntityTypes.COPYCAT.getValidBlocks());
         for (BlockEntry<?> entry : List.of(
                 CCBlocks.COPYCAT_BLOCK,
                 CCBlocks.COPYCAT_SLAB,
@@ -215,8 +215,9 @@ public class CCBlockEntityTypes {
                 CCBlocks.COPYCAT_WALL,
                 CCBlocks.COPYCAT_BOARD
         )) {
-            copycat.addValidBlock(entry.get());
+            blocks.add(entry.get());
         }
+        ((com.hlysine.create_connected.mixin.copycat.BlockEntityTypeAccessor) AllBlockEntityTypes.COPYCAT).create_connected$setValidBlocks(blocks);
     }
 
     public static final BlockEntityEntry<FanCatalystRotatingHeadBlockEntity> FAN_ENDING_CATALYST_DRAGON_HEAD = REGISTRATE
@@ -230,7 +231,7 @@ public class CCBlockEntityTypes {
             .register();
 
 
+    /** Loads the class, which registers every entry above. The copycat blocks are added in {@link #addCopycatBlocks}. */
     public static void register() {
-        registerCopycatBlocks();
     }
 }

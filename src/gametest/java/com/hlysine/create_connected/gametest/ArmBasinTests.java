@@ -6,7 +6,6 @@ import com.zurrtum.create.content.logistics.chute.ChuteBlockEntity;
 import com.zurrtum.create.content.processing.basin.BasinBlockEntity;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.foundation.blockEntity.behaviour.filtering.ServerFilteringBehaviour;
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -33,8 +32,7 @@ public class ArmBasinTests {
     private static final BlockPos CHEST = new BlockPos(5, 0, 1);
 
     /** Leftover quartz sits in the input slots ahead of the granite; the arm must still move the granite. */
-    @GameTest(maxTicks = 400)
-    public void armTakesGraniteBehindLeftoverQuartz(GameTestHelper helper) {
+    public static void armTakesGraniteBehindLeftoverQuartz(GameTestHelper helper) {
         build(helper, "take", "deposit");
         BasinBlockEntity basin = helper.getBlockEntity(BASIN, BasinBlockEntity.class);
         basin.itemCapability.setItem(0, new ItemStack(Items.QUARTZ, 32));
@@ -43,8 +41,7 @@ public class ArmBasinTests {
     }
 
     /** Create writes arm point modes uppercase; a schematic made there must keep its targets. */
-    @GameTest(maxTicks = 400)
-    public void armKeepsUppercaseTargetsFromCreate(GameTestHelper helper) {
+    public static void armKeepsUppercaseTargetsFromCreate(GameTestHelper helper) {
         build(helper, "TAKE", "DEPOSIT");
         BasinBlockEntity basin = helper.getBlockEntity(BASIN, BasinBlockEntity.class);
         basin.itemCapability.setItem(9, new ItemStack(Items.GRANITE, 16));

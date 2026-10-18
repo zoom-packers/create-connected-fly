@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.goggleslot;
 
+import net.minecraft.util.Prediction;
 import com.hlysine.create_connected.registries.CCPackets;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -54,7 +55,7 @@ public record GoggleSlotQuickMovePacket(int inventoryIndex) implements CustomPac
                 return;
             GoggleSlot.set(player, ItemStack.EMPTY);
             if (!inventory.add(worn))
-                player.drop(worn, false);
+                player.drop(worn, false, Prediction.SERVER_ONLY);
         } else {
             if (inventoryIndex < 0 || inventoryIndex >= MAIN_AND_HOTBAR || !worn.isEmpty())
                 return;

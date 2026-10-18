@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.copycat.board;
 
+import net.minecraft.util.Prediction;
 import com.google.common.collect.ImmutableMap;
 import com.hlysine.create_connected.registries.CCShapes;
 import com.hlysine.create_connected.content.copycat.MigratingWaterloggedCopycatBlock;
@@ -183,7 +184,7 @@ public class CopycatBoardBlock extends MigratingWaterloggedCopycatBlock implemen
             if (player != null && !player.isCreative()) {
                 List<ItemStack> drops = Block.getDrops(defaultBlockState().setValue(byDirection(options.get(0)), true), (ServerLevel) world, pos, world.getBlockEntity(pos), player, context.getItemInHand());
                 for (ItemStack drop : drops) {
-                    player.getInventory().placeItemBackInInventory(drop);
+                    player.getInventory().placeItemBackInInventory(drop, Prediction.SERVER_ONLY);
                 }
             }
             world.setBlockAndUpdate(pos, state.setValue(byDirection(options.get(0)), false));

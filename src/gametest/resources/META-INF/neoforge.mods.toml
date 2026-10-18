@@ -1,0 +1,16 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "AGPL-3.0-only"
+
+# Dev-only GameTests for the NeoForge 26.3 port; never part of the released jar.
+[[mods]]
+modId = "create_connected_gametest"
+version = "0.0.0"
+displayName = "Create: Connected GameTests"
+
+[[dependencies.create_connected_gametest]]
+modId = "create_connected"
+type = "required"
+versionRange = "*"
+ordering = "AFTER"
+side = "BOTH"

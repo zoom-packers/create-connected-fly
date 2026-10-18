@@ -2,7 +2,9 @@ package com.hlysine.create_connected.content.goggleslot;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.world.entity.player.PlayerModelType;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -32,12 +34,14 @@ public class GoggleSlotLayer extends RenderLayer<AvatarRenderState, PlayerModel>
         super(renderer);
     }
 
+    /** NeoForge: mod-bus {@code EntityRenderersEvent.AddLayers}, once per player skin model. */
     @SuppressWarnings("unchecked")
-    public static void register() {
-        LivingEntityRenderLayerRegistrationCallback.EVENT.register((type, renderer, helper, context) -> {
-            if (renderer instanceof AvatarRenderer<?> avatar)
-                helper.register(new GoggleSlotLayer((RenderLayerParent<AvatarRenderState, PlayerModel>) (Object) avatar));
-        });
+    public static void register(EntityRenderersEvent.AddLayers event) {
+        for (PlayerModelType skin : event.getSkins()) {
+            AvatarRenderer<AbstractClientPlayer> avatar = event.getPlayerRenderer(skin);
+            if (avatar != null)
+                avatar.addLayer(new GoggleSlotLayer((RenderLayerParent<AvatarRenderState, PlayerModel>) (Object) avatar));
+        }
     }
 
     @Override
@@ -58,10 +62,10 @@ public class GoggleSlotLayer extends RenderLayer<AvatarRenderState, PlayerModel>
         model.root().translateAndRotate(poseStack);
         model.getHead().translateAndRotate(poseStack);
         poseStack.translate(0.0F, -0.25F, 0.0F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+        poseStack.rotate(Axis.YP.rotationDegrees(180.0F));
         poseStack.scale(0.625F, -0.625F, -0.625F);
         if (!state.headEquipment.isEmpty()) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+            poseStack.rotate(Axis.ZP.rotationDegrees(180.0F));
             poseStack.translate(0.0F, -0.25F, 0.0F);
         }
         ItemStackRenderState item = new ItemStackRenderState();

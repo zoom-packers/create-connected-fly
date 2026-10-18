@@ -4,10 +4,8 @@ import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.config.CCConfigs;
 import net.createmod.catnip.config.ui.ConfigScreen;
 import net.createmod.catnip.config.ui.SubMenuConfigScreen;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.client.Minecraft;
-import net.fabricmc.api.EnvType;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.util.thread.EffectiveSide;
 import org.spongepowered.asm.mixin.Mixin;

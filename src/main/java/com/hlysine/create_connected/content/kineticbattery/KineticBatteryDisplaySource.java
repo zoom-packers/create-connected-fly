@@ -12,8 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 
 public class KineticBatteryDisplaySource extends PercentOrProgressBarDisplaySource {
 

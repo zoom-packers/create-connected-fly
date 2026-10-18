@@ -100,9 +100,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
 import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
-import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -162,7 +160,7 @@ public class CCBlocks {
     public static final BlockEntry<ParallelGearboxBlock> PARALLEL_GEARBOX = REGISTRATE.block("parallel_gearbox", ParallelGearboxBlock::new)
             .initialProperties(SharedProperties::stone)
             // getPistonPushReaction is not an override any more -- it is baked into the properties.
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL).pushReaction(PushReaction.PUSH_ONLY))
+            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL).pushReaction(PushReaction.PUSH))
             .transform(CStress.setNoImpact())
             .transform(FeatureToggle.register(FeatureCategory.KINETIC))
             .transform(axeOrPickaxe())
@@ -174,7 +172,7 @@ public class CCBlocks {
 
     public static final BlockEntry<SixWayGearboxBlock> SIX_WAY_GEARBOX = REGISTRATE.block("six_way_gearbox", SixWayGearboxBlock::new)
             .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL).pushReaction(PushReaction.PUSH_ONLY))
+            .properties(p -> p.noOcclusion().mapColor(MapColor.PODZOL).pushReaction(PushReaction.PUSH))
             .transform(CStress.setNoImpact())
             .transform(FeatureToggle.register(FeatureCategory.KINETIC))
             .transform(axeOrPickaxe())
@@ -324,7 +322,7 @@ public class CCBlocks {
 
     public static final BlockEntry<BrassGearboxBlock> BRASS_GEARBOX = REGISTRATE.block("brass_gearbox", BrassGearboxBlock::new)
             .initialProperties(SharedProperties::stone)
-            .properties(p -> p.noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN).pushReaction(PushReaction.PUSH_ONLY))
+            .properties(p -> p.noOcclusion().mapColor(MapColor.TERRACOTTA_BROWN).pushReaction(PushReaction.PUSH))
             .transform(CStress.setNoImpact())
             .transform(FeatureToggle.register(FeatureCategory.KINETIC))
             .transform(axeOrPickaxe())

@@ -1,13 +1,11 @@
 {
-  "fabric:load_conditions": [
+  "neoforge:conditions": [
     {
-      "condition": "fabric:all_mods_loaded",
-      "values": [
-        "create_dragons_plus"
-      ]
+      "type": "neoforge:mod_loaded",
+      "modid": "create_dragons_plus"
     },
     {
-      "condition": "create_connected:feature_enabled",
+      "type": "create_connected:feature_enabled",
       "tag": "create_connected:empty_fan_catalyst"
     }
   ],
@@ -25,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "create_connected:crafting/kinetics/empty_fan_catalyst_from_ending_dragons_breath"
+        "recipes": "create_connected:crafting/kinetics/empty_fan_catalyst_from_ending_dragons_breath"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

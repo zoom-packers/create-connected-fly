@@ -1,11 +1,11 @@
 {
-  "fabric:load_conditions": [
+  "neoforge:conditions": [
     {
-      "condition": "create_connected:feature_enabled",
+      "type": "create_connected:feature_enabled",
       "tag": "create_connected:vertical_brass_gearbox"
     },
     {
-      "condition": "create_connected:feature_enabled",
+      "type": "create_connected:feature_enabled",
       "tag": "create_connected:brass_gearbox"
     }
   ],
@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "create_connected:crafting/kinetics/brass_gearbox_from_conversion"
+        "recipes": "create_connected:crafting/kinetics/brass_gearbox_from_conversion"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

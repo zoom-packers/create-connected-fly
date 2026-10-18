@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.mixin;
 
+import net.minecraft.util.Prediction;
 import com.hlysine.create_connected.config.CServer;
 import com.zurrtum.create.content.kinetics.deployer.ManualApplicationHelper;
 import net.minecraft.core.BlockPos;
@@ -58,7 +59,7 @@ public class ManualApplicationRecipeMixin {
         } else {
             heldItem.grow(1); // Create shrinks the stack again right after this inject
             if (!player.getInventory().add(leftover)) {
-                player.drop(leftover, false);
+                player.drop(leftover, false, Prediction.SERVER_ONLY);
             }
         }
     }

@@ -1,40 +1,33 @@
 package com.hlysine.create_connected.datagen.recipes;
 
 import com.hlysine.create_connected.config.FeatureToggle;
-import com.hlysine.create_connected.registries.CCCraftingConditions;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
-import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditionType;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.RegistryOps;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * NeoForge's {@code ICondition} becomes Fabric's {@link ResourceCondition}. The shape is the same
- * -- a MapCodec plus a test -- but the type is a first-class object registered by hand rather than
- * a codec placed in a registry, and {@code test} receives a registry lookup rather than an
- * {@code IContext}.
- * <p>
- * The serialised form changed with it: the surrounding key is {@code fabric:load_conditions} and
- * each entry is discriminated by {@code condition}, not {@code type}. The recipe JSONs already
- * carry that form.
+ * A NeoForge {@code ICondition} again, as upstream (the Fabric port had made it a Fabric
+ * {@code ResourceCondition}). The recipe JSONs carry {@code neoforge:conditions}, converted from the
+ * Fabric port's {@code fabric:load_conditions} by {@code tools/fabric_conditions_to_neoforge.py}.
  */
-public record FeatureEnabledCondition(Identifier feature) implements ResourceCondition {
+public record FeatureEnabledCondition(Identifier feature) implements ICondition {
     public static final MapCodec<FeatureEnabledCondition> CODEC = RecordCodecBuilder.mapCodec((builder) -> builder
             .group(Identifier.CODEC.fieldOf("tag").forGetter(FeatureEnabledCondition::feature))
             .apply(builder, FeatureEnabledCondition::new)
     );
 
     @Override
-    public boolean test(RegistryOps.@Nullable RegistryInfoLookup registryInfo) {
+    public boolean test(IContext context) {
         return FeatureToggle.isEnabled(feature);
     }
 
     @Override
-    public ResourceConditionType<?> getType() {
-        return CCCraftingConditions.FEATURE_ENABLED;
+    public MapCodec<? extends ICondition> codec() {
+        return CODEC;
     }
+
 
     @Override
     public String toString() {

@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.kineticbattery;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.redstone.Orientation;
 
 
@@ -175,7 +176,7 @@ public class KineticBatteryBlock extends DirectionalKineticBlock implements IBE<
             if (stack.isEmpty()) {
                 player.setItemInHand(hand, leftover);
             } else if (!player.getInventory().add(leftover)) {
-                player.drop(leftover, false);
+                player.drop(leftover, false, Prediction.SERVER_ONLY);
             }
         }
 

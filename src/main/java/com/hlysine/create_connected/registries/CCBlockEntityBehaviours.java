@@ -27,8 +27,6 @@ import com.zurrtum.create.client.foundation.blockEntity.behaviour.filtering.Side
 import com.zurrtum.create.client.foundation.blockEntity.behaviour.scrollValue.RotationDirectionScrollBehaviour;
 import com.zurrtum.create.client.foundation.utility.CreateLang;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -43,7 +41,6 @@ import java.util.function.Function;
  * <p>
  * This mirrors Create Fly's own {@code AllBlockEntityBehaviours}.
  */
-@Environment(EnvType.CLIENT)
 public class CCBlockEntityBehaviours {
 
     @SafeVarargs

@@ -4,22 +4,23 @@ import com.hlysine.create_connected.content.fluidvessel.FluidVesselBlockEntity;
 import com.hlysine.create_connected.content.inventoryaccessport.InventoryAccessPortBlockEntity;
 import com.hlysine.create_connected.content.inventorybridge.InventoryBridgeBlockEntity;
 import com.hlysine.create_connected.content.itemsilo.ItemSiloBlockEntity;
-import com.zurrtum.create.AllTransfer;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
-import com.zurrtum.create.foundation.blockEntity.behaviour.CachedFluidInventoryBehaviour;
-import com.zurrtum.create.foundation.blockEntity.behaviour.CachedInventoryBehaviour;
+import com.zurrtum.create.neoforge.transfer.CachedFluidInventoryBehaviour;
+import com.zurrtum.create.neoforge.transfer.CachedInventoryBehaviour;
+import com.zurrtum.create.neoforge.transfer.NeoForgeTransfer;
 import com.zurrtum.create.infrastructure.fluids.FluidInventory;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.minecraft.world.Container;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.function.Function;
 
 /**
- * Publishes this mod's inventories to Fabric's transfer API, which is a separate audience from
- * Create's own.
+ * Publishes this mod's inventories to the loader's transfer API, which is a separate audience from
+ * Create's own. NeoForge: {@code Capabilities.Item.BLOCK} / {@code Capabilities.Fluid.BLOCK}, through the
+ * Create port's {@link NeoForgeTransfer}, which records them during bootstrap and registers them on
+ * {@code RegisterCapabilitiesEvent}. The notes below describe the Fabric port, where the same
+ * two-step applied to {@code ItemStorage.SIDED} / {@code FluidStorage.SIDED}.
  * <p>
  * Declaring {@code ItemInventoryProvider} / {@code FluidInventoryProvider} on the block is what
  * makes pipes and funnels work, and that is all upstream's {@code RegisterCapabilitiesEvent}
@@ -42,11 +43,6 @@ import java.util.function.Function;
 public class CCTransfer {
 
     public static void register() {
-        // Set when fabric-transfer-api-v1 is absent. Create Fly skips its own registration then,
-        // and these calls would fail on a missing class rather than degrade.
-        if (AllTransfer.DISABLE)
-            return;
-
         // Both vessels share one declaration: the creative one is a subclass, and the capability
         // getter it inherits already resolves through the multiblock controller.
         registerFluidSide(CCBlockEntityTypes.FLUID_VESSEL.get(), FluidVesselBlockEntity::getFluidInventory);
@@ -65,7 +61,7 @@ public class CCTransfer {
             Function<T, Container> factory
     ) {
         BlockEntityBehaviour.add(type, be -> new CachedInventoryBehaviour<>(be, factory));
-        ItemStorage.SIDED.registerForBlockEntity(CachedInventoryBehaviour::get, type);
+        NeoForgeTransfer.registerItem(type, CachedInventoryBehaviour::get);
     }
 
     private static <T extends SmartBlockEntity> void registerFluidSide(
@@ -73,6 +69,6 @@ public class CCTransfer {
             Function<T, FluidInventory> factory
     ) {
         BlockEntityBehaviour.add(type, be -> new CachedFluidInventoryBehaviour<>(be, factory));
-        FluidStorage.SIDED.registerForBlockEntity(CachedFluidInventoryBehaviour::get, type);
+        NeoForgeTransfer.registerFluid(type, CachedFluidInventoryBehaviour::get);
     }
 }

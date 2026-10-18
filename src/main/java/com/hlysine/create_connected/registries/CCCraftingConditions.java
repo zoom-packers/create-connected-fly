@@ -3,25 +3,29 @@ package com.hlysine.create_connected.registries;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.datagen.recipes.FeatureEnabledCondition;
 import com.hlysine.create_connected.datagen.recipes.FeatureEnabledInCopycatsCondition;
-import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditionType;
-import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditions;
+import com.mojang.serialization.MapCodec;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.conditions.ICondition;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+
+import java.util.function.Supplier;
 
 /**
- * Fabric keeps resource conditions in a map of its own rather than a Minecraft registry, so these
- * are plain objects registered directly instead of DeferredRegister entries.
+ * NeoForge: condition codecs live in a NeoForge registry, registered from the mod constructor as upstream did.
  */
+@SuppressWarnings("unused")
 public class CCCraftingConditions {
-    public static final ResourceConditionType<FeatureEnabledCondition> FEATURE_ENABLED =
-            ResourceConditionType.create(CreateConnected.asResource("feature_enabled"), FeatureEnabledCondition.CODEC);
+    public static final DeferredRegister<MapCodec<? extends ICondition>> CONDITION_CODECS =
+            DeferredRegister.create(NeoForgeRegistries.Keys.CONDITION_CODECS, CreateConnected.MODID);
 
-    public static final ResourceConditionType<FeatureEnabledInCopycatsCondition> FEATURE_ENABLED_IN_COPYCATS =
-            ResourceConditionType.create(
-                    CreateConnected.asResource("feature_enabled_in_copycats"),
-                    FeatureEnabledInCopycatsCondition.CODEC
-            );
+    public static final Supplier<MapCodec<FeatureEnabledCondition>> FEATURE_ENABLED =
+            CONDITION_CODECS.register("feature_enabled", () -> FeatureEnabledCondition.CODEC);
 
-    public static void register() {
-        ResourceConditions.register(FEATURE_ENABLED);
-        ResourceConditions.register(FEATURE_ENABLED_IN_COPYCATS);
+    public static final Supplier<MapCodec<FeatureEnabledInCopycatsCondition>> FEATURE_ENABLED_IN_COPYCATS =
+            CONDITION_CODECS.register("feature_enabled_in_copycats", () -> FeatureEnabledInCopycatsCondition.CODEC);
+
+    public static void register(IEventBus modBus) {
+        CONDITION_CODECS.register(modBus);
     }
 }

@@ -1,7 +1,7 @@
 {
-  "fabric:load_conditions": [
+  "neoforge:conditions": [
     {
-      "condition": "create_connected:feature_enabled",
+      "type": "create_connected:feature_enabled",
       "tag": "create_connected:inventory_access_port"
     }
   ],
@@ -19,7 +19,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "create_connected:crafting/kinetics/inventory_access_port"
+        "recipes": "create_connected:crafting/kinetics/inventory_access_port"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

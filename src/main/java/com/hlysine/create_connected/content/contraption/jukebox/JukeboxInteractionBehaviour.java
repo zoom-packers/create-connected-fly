@@ -22,8 +22,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,8 +96,6 @@ public class JukeboxInteractionBehaviour extends MovingInteractionBehaviour {
             public void levelEvent(@Nullable Entity player, int type, BlockPos pos, int data) {
                 if (type == 1010 || type == 1011)
                     {
-                        // PacketDistributor is NeoForge's; Fabric addresses recipients through
-                        // PlayerLookup and sends each payload individually.
                         PlayContraptionJukeboxPacket payload = new PlayContraptionJukeboxPacket(dimension().identifier(),
                                     contraptionEntity.getId(),
                                     contraptionPos,
@@ -107,8 +104,7 @@ public class JukeboxInteractionBehaviour extends MovingInteractionBehaviour {
                                     type == 1010,
                                     silent
                             );
-                        for (ServerPlayer recipient : PlayerLookup.level((ServerLevel) contraptionEntity.level()))
-                            ServerPlayNetworking.send(recipient, payload);
+                        PacketDistributor.sendToPlayersInDimension((ServerLevel) contraptionEntity.level(), payload);
                     }
             }
         });

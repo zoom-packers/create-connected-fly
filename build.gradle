@@ -1,215 +1,200 @@
+// NeoForge 26.3 build of Create: Connected for Zoompack 5, on ZP5's NeoForge port of Create Fly.
+// The Fabric 26.2 build this branch started from is in git history (GravisLudio/create-connected-fly main).
+// See PORTING-NEOFORGE.md.
 plugins {
+    id 'java-library'
     id 'idea'
-    id "net.fabricmc.fabric-loom" version "${loom_version}"
+    id 'net.neoforged.moddev' version '2.0.148'
 }
 
-version = mod_version
-group = mod_group_id
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                url = 'https://maven.blamejared.com'
+            }
+        }
+        filter {
+            includeGroup 'mezz.jei'
+            includeGroup 'net.mezzdev.config'
+        }
+    }
+}
+
+def modId = project.mod_id
+def createJar = file(project.create_jar)
+
+version = project.mod_version
+group = project.mod_group_id
 
 base {
-    archivesName = "${mod_id}-fly"
+    archivesName = modId
 }
 
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
 sourceSets {
+    main {
+        java {
+            // Integrations with mods that have no NeoForge 26.3 build. Kept in the tree, as upstream did for 26.2.
+            exclude 'com/hlysine/create_connected/compat/AdditionalPlacementsCompat.java'  // Additional Placements
+            exclude 'com/hlysine/create_connected/compat/CopycatsManager.java'             // Copycats+
+            exclude 'com/hlysine/create_connected/compat/DyeDepotCompat.java'              // Dye Depot
+            exclude 'com/hlysine/create_connected/compat/SimCompatRegistry.java'           // Simulated
+            exclude 'com/hlysine/create_connected/mixin/compat/**'
+            exclude 'com/hlysine/create_connected/mixin/linkedtransmitter/ThrottleLeverBlockMixin.java'
+            exclude 'com/hlysine/create_connected/content/linkedtransmitter/LinkedThrottleLever*.java'
+            // Create Fly has no catnip.config.ui, no ItemUseOverrides and no MountedStorageManager.readLegacy
+            exclude 'com/hlysine/create_connected/mixin/featuretoggle/SubMenuConfigScreenMixin.java'
+            exclude 'com/hlysine/create_connected/mixin/ItemUseOverridesMixin.java'
+            exclude 'com/hlysine/create_connected/mixin/itemsilo/MountedStorageManagerMixin.java'
+            // Registrate-era generators, unreferenced since the generated JSON is committed
+            exclude 'com/hlysine/create_connected/datagen/CCBlockStateGen.java'
+            exclude 'com/hlysine/create_connected/datagen/CCDatagen.java'
+            exclude 'com/hlysine/create_connected/content/fluidvessel/FluidVesselGenerator.java'
+            exclude 'com/hlysine/create_connected/content/inventoryaccessport/InventoryAccessPortGenerator.java'
+            exclude 'com/hlysine/create_connected/content/kineticbattery/KineticBatteryGenerator.java'
+        }
+        resources {
+            srcDir 'src/generated/resources'
+            // Fabric-only metadata
+            exclude 'fabric.mod.json'
+            exclude 'create_connected.classtweaker'
+        }
+    }
+    // Dev-only GameTests (mod create_connected_gametest), never in the jar
     gametest {
         compileClasspath += main.compileClasspath + main.output
         runtimeClasspath += main.runtimeClasspath + main.output
     }
 }
 
-loom {
-    // SIN splitEnvironmentSourceSets(): un solo source set, como la version NeoForge.
-    // Partir el proyecto obligaria a operar 49 archivos mixtos (BlockEntities con metodos de
-    // render inline, etc). Con un source set unico el jar entero de Create Fly --main y client--
-    // queda en el classpath, y el aislamiento de entorno se mantiene como ya lo hacia el mod:
-    // @Environment(EnvType.CLIENT) y el config de mixins de cliente aparte.
-    accessWidenerPath = file("src/main/resources/create_connected.classtweaker")
+configurations {
+    gametestImplementation.extendsFrom implementation
+    localRuntime
+    runtimeClasspath.extendsFrom localRuntime
+    gametestRuntimeClasspath.extendsFrom localRuntime
+}
+
+// Create's access transformers widen vanilla members its API exposes (and that this mod's code compiled against on
+// Fabric through Create Fly's classtweaker), so the recompiled Minecraft must carry them too
+def extractCreateAt = tasks.register('extractCreateAt', Sync) {
+    from(zipTree(createJar)) {
+        include 'META-INF/accesstransformer.cfg'
+        eachFile { path = 'create_accesstransformer.cfg' }
+    }
+    into layout.buildDirectory.dir('create-at')
+    includeEmptyDirs = false
+}
+
+neoForge {
+    version = project.neo_version
+
+    addModdingDependenciesTo sourceSets.gametest
+
+    accessTransformers {
+        from file('src/main/resources/META-INF/accesstransformer.cfg')
+        from files(layout.buildDirectory.file('create-at/create_accesstransformer.cfg')).builtBy(extractCreateAt)
+    }
+    // Compile-time view of the interfaces Create's ContainerMixin/WorldlyContainerMixin add at runtime
+    interfaceInjectionData {
+        from file(project.create_interfaces)
+    }
 
     mods {
-        "create_connected" {
-            sourceSet sourceSets.main
+        "${modId}" {
+            sourceSet(sourceSets.main)
         }
-        "create_connected_gametest" {
-            sourceSet sourceSets.gametest
+        create_connected_gametest {
+            sourceSet(sourceSets.gametest)
         }
     }
 
-    // `gradlew runGametest`: a headless server that runs every @GameTest in src/gametest and exits,
-    // with the results in build/gametest/report.xml. The tests live in their own source set so none
-    // of them ends up in the released jar.
     runs {
-        gametest {
+        client {
+            client()
+            sourceSet = sourceSets.gametest
+            loadedMods = [mods."${modId}", mods.create_connected_gametest]
+        }
+        server {
             server()
-            name "Game Test"
-            source sourceSets.gametest
-            vmArg "-Dfabric-api.gametest"
-            vmArg "-Dfabric-api.gametest.report-file=${project.file('build/gametest/report.xml')}"
-            runDir "build/gametest"
+            sourceSet = sourceSets.gametest
+            programArgument '--nogui'
+            loadedMods = [mods."${modId}", mods.create_connected_gametest]
         }
-    }
-}
-
-// Integraciones con mods que todavia no existen en 26.2. El codigo se conserva en el repo
-// --no se borra-- para reactivarlo cuando cada mod se portee; solo se saca del compilado.
-sourceSets.main.java {
-    exclude 'com/hlysine/create_connected/compat/AdditionalPlacementsCompat.java'  // Additional Placements
-    exclude 'com/hlysine/create_connected/compat/CopycatsManager.java'             // Copycats+
-    exclude 'com/hlysine/create_connected/compat/DyeDepotCompat.java'              // Dye Depot
-    exclude 'com/hlysine/create_connected/compat/SimCompatRegistry.java'           // Simulated
-    // JEI ya existe en 26.2 y CreateConnectedJEI volvio al compilado. FeatureRefreshEvent no:
-    // era un evento del bus de NeoForge para que los modpacks se engancharan al refresco, y
-    // Fabric no tiene ese bus. Ver CreateConnectedJEI.
-    exclude 'com/hlysine/create_connected/compat/FeatureRefreshEvent.java'
-    exclude 'com/hlysine/create_connected/mixin/compat/**'
-
-    // Mixins cuyo target no existe en 26.2:
-    // ThrottleLeverBlock es del mod Simulated (dev.simulated_team.simulated), no de Create.
-    exclude 'com/hlysine/create_connected/mixin/linkedtransmitter/ThrottleLeverBlockMixin.java'
-    // El throttle lever vinculado extiende el bloque de Simulated y solo lo registra
-    // SimCompatRegistry, que ya esta excluido.
-    exclude 'com/hlysine/create_connected/content/linkedtransmitter/LinkedThrottleLever*.java'
-    // La pantalla de config de catnip no fue porteada: Create Fly tiene catnip.config pero no
-    // catnip.config.ui. Consecuencia: no hay UI in-game para los feature toggles; se editan por
-    // archivo. Restaurar si catnip.config.ui aparece.
-    exclude 'com/hlysine/create_connected/mixin/featuretoggle/SubMenuConfigScreenMixin.java'
-    // Create Fly no tiene ItemUseOverrides; el mecanismo completo desaparecio, no fue renombrado.
-    // Ver PreciseItemUseOverrides para la consecuencia de comportamiento.
-    exclude 'com/hlysine/create_connected/mixin/ItemUseOverridesMixin.java'
-    // MountedStorageManager.readLegacy no existe en Create Fly: la lectura del formato viejo de
-    // storage en contraptions se elimino entera, no se renombro (javap sobre MountedStorageManager
-    // solo tiene read(ValueInput,...) y read(DynamicOps,...)). Sin ese metodo no hay donde
-    // inyectar, y como Create Fly tampoco lee ese formato, no habria datos que migrar igual.
-    // Consecuencia: los silos que viajaban en una contraption de un mundo 1.21.1 no se recuperan.
-    exclude 'com/hlysine/create_connected/mixin/itemsilo/MountedStorageManagerMixin.java'
-
-    // Generadores de blockstates/modelos. Quedaron sin referencias al sacar el datagen de las
-    // cadenas de registro; se conservan por si algun dia se regeneran los JSON contra 26.2.
-    exclude 'com/hlysine/create_connected/datagen/CCBlockStateGen.java'
-    exclude 'com/hlysine/create_connected/datagen/CCDatagen.java'
-    // CCAdvancement NO va aca aunque viva bajo datagen/: awardTo/isAlreadyAwardedTo son runtime, y
-    // registra los triggers "<id>_builtin" que los JSON de avances ya committeados nombran como su
-    // criterio. Excluirlo deja los avances sin poder dispararse, sin error de compilacion.
-    // Generadores de blockstate/modelo por feature. Quedaron sin referencias al sacar el datagen
-    // de las cadenas de registro.
-    exclude 'com/hlysine/create_connected/content/fluidvessel/FluidVesselGenerator.java'
-    exclude 'com/hlysine/create_connected/content/inventoryaccessport/InventoryAccessPortGenerator.java'
-    exclude 'com/hlysine/create_connected/content/kineticbattery/KineticBatteryGenerator.java'
-}
-
-// Los 1025 JSONs que Registrate genero en 1.21.1. Se conservan y se migran a los
-// formatos de 26.2 a mano (tarea #8) en vez de regenerarlos: Create Fly no tiene
-// Registrate, asi que no hay datagen equivalente que los vuelva a producir.
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
-repositories {
-    mavenCentral()
-    maven {
-        name = "Fabric"
-        url = "https://maven.fabricmc.net/"
-    }
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = "Modrinth"
-                url = "https://api.modrinth.com/maven"
+        gameTestServer {
+            type = 'gameTestServer'
+            sourceSet = sourceSets.gametest
+            // This mod's tests plus Create's own water wheel -> press test as a baseline
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'create_connected_gametest,create'
+            loadedMods = [mods."${modId}", mods.create_connected_gametest]
+        }
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.INFO
+            if (project.hasProperty('mixinDebug')) {
+                systemProperty 'mixin.debug.verbose', 'true'
+                systemProperty 'mixin.checks.interfaces', 'true'
             }
-        }
-        filter {
-            includeGroup "maven.modrinth"
-        }
-    }
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = "Curse Maven"
-                url = "https://cursemaven.com"
-            }
-        }
-        filter {
-            includeGroup "curse.maven"
         }
     }
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${loader_version}"
-
-    // The fabric-api artifact is a container: 53 nested jars, zero classes of its own. Depending on
-    // it as plain `implementation` puts nothing on the compile classpath, and the symptom is a
-    // package-does-not-exist on every fabric.api import -- not a missing-jar error. Loom's
-    // modImplementation would have unpacked it, but the mod* configurations no longer exist here
-    // (see the Create Fly note below), so the modules we actually use are named individually.
-    // Note the artifact names do not match the packages: `net.fabricmc.fabric.api.itemgroup.v1`
-    // ships in fabric-creative-tab-api-v1.
-    implementation fabricApi.module("fabric-creative-tab-api-v1", fabric_version)
-    implementation fabricApi.module("fabric-lifecycle-events-v1", fabric_version)
-    implementation fabricApi.module("fabric-networking-api-v1", fabric_version)
-    implementation fabricApi.module("fabric-object-builder-api-v1", fabric_version)
-    implementation fabricApi.module("fabric-resource-conditions-api-v1", fabric_version)
-    implementation fabricApi.module("fabric-model-loading-api-v1", fabric_version)
-    implementation fabricApi.module("fabric-renderer-api-v1", fabric_version)
-    implementation fabricApi.module("fabric-rendering-v1", fabric_version)
-    // Needed to publish our inventories to ItemStorage.SIDED / FluidStorage.SIDED, which is what
-    // Jade and other non-Create mods read. See CCTransfer.
-    implementation fabricApi.module("fabric-transfer-api-v1", fabric_version)
-
-    // Para el slot de gafas: el attachment guarda y sincroniza el item por jugador,
-    // entity-events da el copiado al reaparecer, y events-interaction el clic derecho.
-    implementation fabricApi.module("fabric-data-attachment-api-v1", fabric_version)
-    implementation fabricApi.module("fabric-entity-events-v1", fabric_version)
-    implementation fabricApi.module("fabric-events-interaction-v0", fabric_version)
-    // Dibujar el slot de gafas en las pantallas de inventario sin tocar sus menus.
-    implementation fabricApi.module("fabric-screen-api-v1", fabric_version)
-    // Still needed at runtime for the rest of the API, and for the JiJ metadata.
-    runtimeOnly "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-
-    // Create Fly. Trae Flywheel, Ponder y Catnip embebidos, por eso no van por separado.
-    // Va con `implementation` y no `modImplementation`: en Loom 1.16 / MC 26.2 el
-    // namespace de produccion ya es mojmap, no hay paso de remapeo y las
-    // configuraciones mod* no existen. Create Fly declara sus deps de mods igual.
-    implementation "maven.modrinth:create-fly:${create_fly_version}"
-
-    // JEI. compileOnly: el plugin solo se carga si JEI esta presente, via el entrypoint
-    // jei_mod_plugin de fabric.mod.json, que es como JEI descubre plugins en Fabric.
-    compileOnly "maven.modrinth:jei:${jei_version}"
-
-    // Not part of the fabric-api bundle: it is a dev-only module.
-    gametestImplementation fabricApi.module("fabric-gametest-api-v1", fabric_version)
+    // Create Fly (NeoForge port): Create, Flywheel, Ponder and Catnip in one mod jar
+    implementation files(createJar)
+    compileOnly "mezz.jei:jei-${project.jei_version}"
+    if (project.hasProperty('withJei')) {
+        localRuntime "mezz.jei:jei-${project.jei_version}"
+    }
 }
 
-processResources {
-    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
-    filteringCharset = 'UTF-8'
-
+// Expands ${...} placeholders in src/main/templates (neoforge.mods.toml) from gradle.properties
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     var replaceProperties = [
-            minecraft_version: minecraft_version,
-            loader_version   : loader_version,
-            mod_id           : mod_id,
-            mod_name         : mod_name,
-            mod_license      : mod_license,
-            mod_version      : mod_version,
-            mod_authors      : mod_authors,
-            mod_description  : mod_description,
+            minecraft_version_range: project.minecraft_version_range,
+            neo_version_range      : project.neo_version_range,
+            create_version_range   : project.create_version_range,
+            mod_id                 : modId,
+            mod_name               : project.mod_name,
+            mod_license            : project.mod_license,
+            mod_version            : project.mod_version,
+            mod_authors            : project.mod_authors,
+            mod_description        : project.mod_description,
     ]
     inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
 
-    filesMatching(['fabric.mod.json', 'pack.mcmeta']) {
-        expand replaceProperties
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching('pack.mcmeta') {
+        expand mod_id: modId
     }
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release = 25
-    // Durante el port necesitamos la lista COMPLETA de errores como worklist,
-    // no los primeros 100 que javac muestra por defecto.
-    options.compilerArgs << '-Xmaxerrs' << '10000' << '-Xmaxwarns' << '10000'
+    options.compilerArgs << '-Xmaxerrs' << '10000'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    withSourcesJar()
+}
+
+// src/main/resources and src/generated/resources overlap on a few files; the hand-written copy wins, as in processResources
+tasks.named('sourcesJar', Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from('LICENSE')
+}
+
+jar {
+    from('LICENSE')
 }
 
 idea {
@@ -217,4 +202,10 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+// The GameTests as their own mod jar, for booting the released jar outside this project (see PORTING-NEOFORGE.md)
+tasks.register('gametestJar', Jar) {
+    archiveClassifier = 'gametest'
+    from sourceSets.gametest.output
 }

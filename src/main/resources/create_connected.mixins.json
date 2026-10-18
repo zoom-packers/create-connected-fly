@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_25",
   "plugin": "com.hlysine.create_connected.mixin.MixinPlugin",
   "mixins": [
+    "BuiltInRegistriesMixin",
     "KineticBlockAdvancementMixin",
     "ManualApplicationRecipeMixin",
     "RotationPropagatorAccessor",
@@ -18,6 +19,7 @@
     "createfixes.ArmUpstreamPointModeMixin",
     "createfixes.SchematicannonChecklistMixin",
     "contraption.ItemCombinerMenuMixin",
+    "copycat.BlockEntityTypeAccessor",
     "copycat.TrackPlacementMixin",
     "copycat.fence.COMPATFenceBlockMixin",
     "copycat.fence.FenceBlockMixin",

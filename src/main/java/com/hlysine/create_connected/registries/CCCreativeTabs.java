@@ -4,8 +4,7 @@ import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.config.FeatureToggle;
 import com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlockEntity;
 import com.hlysine.create_connected.foundation.registrate.ItemProvider;
-import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
-import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTabOutput;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -112,10 +111,7 @@ public class CCCreativeTabs {
                         .build()
         );
 
-        // Replaces BuildCreativeModeTabContentsEvent. Upstream checked for its own tab or the search
-        // tab and removed with PARENT_AND_SEARCH_TABS; here one hook on MAIN covers both, because
-        // the output exposes the display and search stack lists separately.
-        CreativeModeTabEvents.modifyOutputEvent(MAIN).register(CCCreativeTabs::hideDisabled);
+        // NeoForge: hideDisabled is a mod-bus BuildCreativeModeTabContentsEvent listener (CreateConnected).
     }
 
     private static void collect(@NotNull CreativeModeTab.ItemDisplayParameters params, @NotNull CreativeModeTab.Output output) {
@@ -133,13 +129,14 @@ public class CCCreativeTabs {
         }
     }
 
-    private static void hideDisabled(FabricCreativeModeTabOutput output) {
+    public static void hideDisabled(BuildCreativeModeTabContentsEvent event) {
+        if (!event.getTabKey().equals(MAIN))
+            return;
         for (ItemProvider item : ITEMS) {
             if (FeatureToggle.isEnabled(item.getId()))
                 continue;
 
-            output.getDisplayStacks().removeIf(stack -> stack.is(item.asItem()));
-            output.getSearchTabStacks().removeIf(stack -> stack.is(item.asItem()));
+            event.removeIf(stack -> stack.is(item.asItem()), CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
         }
     }
 }

@@ -1,11 +1,11 @@
 {
-  "fabric:load_conditions": [
+  "neoforge:conditions": [
     {
-      "condition": "create_connected:feature_enabled",
+      "type": "create_connected:feature_enabled",
       "tag": "create:fluid_tank"
     },
     {
-      "condition": "create_connected:feature_enabled",
+      "type": "create_connected:feature_enabled",
       "tag": "create_connected:fluid_vessel"
     }
   ],

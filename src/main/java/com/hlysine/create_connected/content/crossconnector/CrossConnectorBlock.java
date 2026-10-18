@@ -113,7 +113,7 @@ public class CrossConnectorBlock extends Block implements IWrenchable, IConnecti
     }
 
     @Override
-    protected @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
+    public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
         return CCShapes.CROSS_CONNECTOR.get(state.getValue(AXIS));
     }
 

@@ -3,8 +3,6 @@ package com.hlysine.create_connected.mixin.createfixes;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.zurrtum.create.client.content.equipment.blueprint.BlueprintRenderer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionfc;
@@ -20,7 +18,6 @@ import org.spongepowered.asm.mixin.injection.At;
  * here means "no rotation", so the matrix is left as it is, which is what Create does by rotating
  * by 0.
  */
-@Environment(EnvType.CLIENT)
 @Mixin(value = BlueprintRenderer.class, remap = false)
 public class BlueprintRendererNullRotationMixin {
     @WrapOperation(

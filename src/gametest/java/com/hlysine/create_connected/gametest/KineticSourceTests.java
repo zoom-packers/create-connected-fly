@@ -7,7 +7,6 @@ import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.content.kinetics.base.GeneratingKineticBlockEntity;
 import com.zurrtum.create.content.kinetics.base.IRotate;
 import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -65,8 +64,7 @@ public class KineticSourceTests {
     }
 
     // padding: the redstone blocks that keep the batteries discharging must not reach other tests.
-    @GameTest(maxTicks = 200_000, skyAccess = true, padding = 8)
-    public void batteryDrivesEveryShaftMachine(GameTestHelper helper) {
+    public static void batteryDrivesEveryShaftMachine(GameTestHelper helper) {
         List<Case> cases = collectCases(helper);
         LOGGER.info("Kinetic source test: {} machine/face cases", cases.size());
         List<Result> results = new ArrayList<>();

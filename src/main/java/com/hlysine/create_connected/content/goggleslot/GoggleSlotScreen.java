@@ -3,11 +3,9 @@ package com.hlysine.create_connected.content.goggleslot;
 import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.mixin.goggleslot.AbstractContainerScreenAccessor;
 import com.hlysine.create_connected.mixin.goggleslot.CreativeModeInventoryScreenAccessor;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -44,7 +42,6 @@ import java.util.Optional;
  * book instead of colliding with it. The creative Inventory tab has a different layout and no
  * recipe book, so there it hangs outside the left edge on a small panel of its own.
  */
-@Environment(EnvType.CLIENT)
 public final class GoggleSlotScreen {
     private static final int PANEL = 0xFFC6C6C6;
     private static final int OUTLINE = 0xFF000000;
@@ -66,13 +63,20 @@ public final class GoggleSlotScreen {
     private GoggleSlotScreen() {
     }
 
+    /** NeoForge: game-bus screen events, filtered to the two inventory screens. */
     public static void register() {
-        ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-            if (!(screen instanceof InventoryScreen) && !(screen instanceof CreativeModeInventoryScreen))
-                return;
-            ScreenEvents.afterExtract(screen).register(GoggleSlotScreen::extract);
-            ScreenMouseEvents.allowMouseClick(screen).register((s, event) -> !click(s, event));
+        NeoForge.EVENT_BUS.addListener((ScreenEvent.Render.Post event) -> {
+            if (isInventory(event.getScreen()))
+                extract(event.getScreen(), event.getGuiGraphics(), event.getMouseX(), event.getMouseY(), event.getPartialTick());
         });
+        NeoForge.EVENT_BUS.addListener((ScreenEvent.MouseButtonPressed.Pre event) -> {
+            if (isInventory(event.getScreen()) && click(event.getScreen(), event.getMouseButtonEvent()))
+                event.setCanceled(true);
+        });
+    }
+
+    private static boolean isInventory(Screen screen) {
+        return screen instanceof InventoryScreen || screen instanceof CreativeModeInventoryScreen;
     }
 
     /** Top-left of the 16x16 item area, or null when the slot should not show on this screen. */
@@ -160,7 +164,7 @@ public final class GoggleSlotScreen {
         if (event.button() == 0 && event.hasShiftDown()) {
             if (overSlot) {
                 if (!GoggleSlot.get(player).isEmpty())
-                    ClientPlayNetworking.send(new GoggleSlotQuickMovePacket(GoggleSlotQuickMovePacket.TO_INVENTORY));
+                    ClientPacketDistributor.sendToServer(new GoggleSlotQuickMovePacket(GoggleSlotQuickMovePacket.TO_INVENTORY));
                 return true;
             }
             // Vanilla sends goggles to the helmet slot on shift-click, because they are a helmet.
@@ -170,7 +174,7 @@ public final class GoggleSlotScreen {
                     && hovered.getContainerSlot() < 36
                     && GoggleSlot.isGoggles(hovered.getItem())
                     && GoggleSlot.get(player).isEmpty()) {
-                ClientPlayNetworking.send(new GoggleSlotQuickMovePacket(hovered.getContainerSlot()));
+                ClientPacketDistributor.sendToServer(new GoggleSlotQuickMovePacket(hovered.getContainerSlot()));
                 return true;
             }
             return false;
@@ -190,7 +194,7 @@ public final class GoggleSlotScreen {
             return true;
 
         boolean creative = player.isCreative();
-        ClientPlayNetworking.send(new GoggleSlotClickPacket(creative ? carried.copy() : ItemStack.EMPTY));
+        ClientPacketDistributor.sendToServer(new GoggleSlotClickPacket(creative ? carried.copy() : ItemStack.EMPTY));
 
         // In creative the cursor is ours to keep in step, mirroring what the server does with the
         // slot; in survival the server owns the cursor and sends it back itself.

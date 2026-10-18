@@ -27,14 +27,15 @@ public class ChargedKineticBatteryItem extends BlockItem {
     public void registerBlocks(@NotNull Map<Block, Item> map, @NotNull Item self) {
     }
 
+    // NeoForge 26.3: BlockItem#updateCustomBlockEntityTag is static now; this runs at the same point (after placement)
     @Override
-    protected boolean updateCustomBlockEntityTag(@NotNull BlockPos pos, @NotNull Level world, Player player, @NotNull ItemStack stack, @NotNull BlockState state) {
-        boolean ret = super.updateCustomBlockEntityTag(pos, world, player, stack, state);
+    public void onBlockPlacedBy(net.minecraft.world.item.context.BlockPlaceContext context, @NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @org.jetbrains.annotations.Nullable Player player, @NotNull ItemStack stack) {
+        if (world.isClientSide())
+            return;
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (!(blockEntity instanceof KineticBatteryBlockEntity batteryBE))
-            return ret;
+            return;
         batteryBE.setBatteryLevel(KineticBatteryBlockEntity.getMaxBatteryLevel());
-        return true;
     }
 
 }

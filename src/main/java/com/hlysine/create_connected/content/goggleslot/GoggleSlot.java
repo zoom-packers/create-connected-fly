@@ -4,13 +4,18 @@ import com.hlysine.create_connected.CreateConnected;
 import com.hlysine.create_connected.config.FeatureToggle;
 import com.zurrtum.create.AllItems;
 import com.zurrtum.create.content.equipment.goggles.GogglesItem;
-import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
-import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
-import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
-import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.util.Prediction;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import java.util.function.Supplier;
+import com.zurrtum.create.neoforge.Platform;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -46,20 +51,25 @@ public final class GoggleSlot {
     /** Also the feature toggle key, so a pack can switch the slot off in the config. */
     public static final Identifier ID = CreateConnected.asResource("goggle_slot");
 
-    private static AttachmentType<ItemStack> WORN;
+    private static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
+            DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, CreateConnected.MODID);
+
+    // Registered unconditionally, even when the feature is off or Trinkets is installed:
+    // an unregistered attachment makes the game drop saved data, which would quietly eat a
+    // player's goggles the first time they loaded with the feature disabled.
+    // NeoForge: a data attachment type, persisted under "stack" (empty stacks are not written) and
+    // synced to every player, since GoggleSlotLayer draws the goggles on other players too.
+    private static final Supplier<AttachmentType<ItemStack>> WORN = ATTACHMENT_TYPES.register(ID.getPath(), () ->
+            AttachmentType.builder(() -> ItemStack.EMPTY)
+                    .serialize(ItemStack.OPTIONAL_CODEC.fieldOf("stack"), stack -> !stack.isEmpty())
+                    .sync((holder, player) -> true, ItemStack.OPTIONAL_STREAM_CODEC)
+                    .build());
 
     private GoggleSlot() {
     }
 
+    /** Runs during bootstrap with the other registries, so the feature toggle exists before CCConfigs is built. */
     public static void register() {
-        // Registered unconditionally, even when the feature is off or Trinkets is installed:
-        // an unregistered attachment makes the game drop saved data, which would quietly eat a
-        // player's goggles the first time they loaded with the feature disabled.
-        WORN = AttachmentRegistry.<ItemStack>builder()
-                .persistent(ItemStack.OPTIONAL_CODEC)
-                .syncWith(ItemStack.OPTIONAL_STREAM_CODEC, AttachmentSyncPredicate.all())
-                .buildAndRegister(ID);
-
         FeatureToggle.register(ID);
 
         if (standDown())
@@ -67,12 +77,48 @@ public final class GoggleSlot {
 
         // The extension point Create Fly offers, and the same one its own Trinkets compat uses.
         GogglesItem.addIsWearingPredicate(GoggleSlot::isWearing);
+    }
+
+    /** NeoForge: the attachment type and the game-bus hooks, from the mod constructor. */
+    public static void registerEvents(IEventBus modBus) {
+        ATTACHMENT_TYPES.register(modBus);
+
+        if (standDown())
+            return;
 
         // Both sides decide, only the server mutates. The client half matters: goggles are a helmet
         // item, so vanilla's own right click equips them to the HEAD slot. If only the server
         // claimed the click, the client would still predict that swap and then get corrected --
         // which looked like the goggles flickering into the helmet slot and vanishing.
-        UseItemCallback.EVENT.register((player, world, hand) -> {
+        NeoForge.EVENT_BUS.addListener((PlayerInteractEvent.RightClickItem event) -> {
+            InteractionResult result = useItem(event.getEntity(), event.getLevel(), event.getHand());
+            if (result != InteractionResult.PASS) {
+                event.setCancellationResult(result);
+                event.setCanceled(true);
+            }
+        });
+
+        // Attachments do not follow a player through death, so respawning is handled explicitly:
+        // drop the goggles where everything else dropped, or carry them over when the rule says
+        // inventories are kept. A clone without a death -- changing dimension -- carries them too.
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (LivingDeathEvent event) -> {
+            if (event.isCanceled() || !(event.getEntity() instanceof Player player))
+                return;
+            ItemStack worn = get(player);
+            // Game rules moved to world.level.gamerules in 26.2 and the values hang off ServerLevel,
+            // not Level: serverLevel.getGameRules().get(rule).
+            if (worn.isEmpty() || !(player.level() instanceof ServerLevel level)
+                    || level.getGameRules().get(GameRules.KEEP_INVENTORY))
+                return;
+            set(player, ItemStack.EMPTY);
+            player.drop(worn, false, Prediction.SERVER_ONLY);
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.Clone event) ->
+                set(event.getEntity(), get(event.getOriginal())));
+    }
+
+    private static InteractionResult useItem(Player player, net.minecraft.world.level.Level world, net.minecraft.world.InteractionHand hand) {
+        {
             if (!isActive())
                 return InteractionResult.PASS;
 
@@ -96,31 +142,12 @@ public final class GoggleSlot {
                     return InteractionResult.SUCCESS;
                 set(player, ItemStack.EMPTY);
                 if (!player.getInventory().add(worn))
-                    player.drop(worn, false);
+                    player.drop(worn, false, Prediction.SERVER_ONLY);
                 equipSound(player, world);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
-        });
-
-        // Attachments do not follow a player through death, so respawning is handled explicitly:
-        // drop the goggles where everything else dropped, or carry them over when the rule says
-        // inventories are kept. `alive` covers the other reason a player entity is replaced --
-        // changing dimension -- where nothing should be lost.
-        ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
-            if (!(entity instanceof Player player))
-                return;
-            ItemStack worn = get(player);
-            // Game rules moved to world.level.gamerules in 26.2 and the values hang off ServerLevel,
-            // not Level: serverLevel.getGameRules().get(rule).
-            if (worn.isEmpty() || !(player.level() instanceof ServerLevel level)
-                    || level.getGameRules().get(GameRules.KEEP_INVENTORY))
-                return;
-            set(player, ItemStack.EMPTY);
-            player.drop(worn, true, false);
-        });
-        ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) ->
-                set(newPlayer, get(oldPlayer)));
+        }
     }
 
     private static void equipSound(Player player, net.minecraft.world.level.Level world) {
@@ -133,7 +160,7 @@ public final class GoggleSlot {
      * running both would mean two places to put the same item, and the wrong one would look broken.
      */
     private static boolean standDown() {
-        return FabricLoader.getInstance().isModLoaded("trinkets");
+        return Platform.isModLoaded("trinkets");
     }
 
     /** Checked per call, not cached: a feature toggled off mid-game takes effect immediately. */
@@ -146,11 +173,11 @@ public final class GoggleSlot {
     }
 
     public static ItemStack get(Player player) {
-        return player.getAttachedOrElse(WORN, ItemStack.EMPTY);
+        return player.getData(WORN);
     }
 
     public static void set(Player player, ItemStack stack) {
-        player.setAttached(WORN, stack.isEmpty() ? ItemStack.EMPTY : stack);
+        player.setData(WORN, stack.isEmpty() ? ItemStack.EMPTY : stack);
     }
 
     public static boolean isWearing(Player player) {

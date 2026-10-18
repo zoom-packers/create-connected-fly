@@ -11,22 +11,24 @@ import com.hlysine.create_connected.registries.CCBlockEntityBehaviours;
 import com.hlysine.create_connected.registries.CCPartialModels;
 import com.hlysine.create_connected.registries.CCPonderPlugin;
 import com.zurrtum.create.client.ponder.foundation.PonderIndex;
-import net.fabricmc.api.ClientModInitializer;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
 
 /**
- * Fabric client entrypoint (was {@code @Mod(dist = Dist.CLIENT)}).
+ * NeoForge client entrypoint (the Fabric port's {@code ClientModInitializer}).
  * <p>
- * The project uses a single source set rather than {@code splitEnvironmentSourceSets()}, so this
- * sits next to common code; Fabric only loads it on a client because it is declared under the
- * {@code client} entrypoint in {@code fabric.mod.json}.
+ * It runs after Create's client entrypoint (the mod declares an AFTER ordering on {@code create}) and after
+ * bootstrap, so the registry objects these calls bind renderers and models to already exist.
  * <p>
  * Order matters in one place: {@code CCPartialModels.register()} has to run before
  * {@code CCBlockEntityRenders.register()}, because the Flywheel visuals resolve partial models at
  * construction.
  */
-public class CreateConnectedClient implements ClientModInitializer {
-    @Override
-    public void onInitializeClient() {
+@Mod(value = CreateConnected.MODID, dist = Dist.CLIENT)
+public class CreateConnectedClient {
+    public CreateConnectedClient(IEventBus modBus, ModContainer container) {
         CCPartialModels.register();
         CCModels.register();
         CCBlockEntityRenders.register();
@@ -34,7 +36,7 @@ public class CreateConnectedClient implements ClientModInitializer {
         CCDisplaySourceRenders.register();
         CCConnectedTextures.register();
         GoggleSlotScreen.register();
-        GoggleSlotLayer.register();
+        modBus.addListener(GoggleSlotLayer::register);
         FlywheelShutdownFix.register();
         PonderIndex.addPlugin(new CCPonderPlugin());
     }

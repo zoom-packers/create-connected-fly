@@ -29,8 +29,9 @@ public class CopycatCatwalkItem extends BlockItem {
     public void registerBlocks(@NotNull Map<Block, Item> map, @NotNull Item self) {
     }
 
+    // NeoForge 26.3: BlockItem#updateCustomBlockEntityTag is static now; this runs at the same point (after placement)
     @Override
-    protected boolean updateCustomBlockEntityTag(@NotNull BlockPos pos, @NotNull Level world, Player player, @NotNull ItemStack stack, @NotNull BlockState state) {
+    public void onBlockPlacedBy(net.minecraft.world.item.context.BlockPlaceContext context, @NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @org.jetbrains.annotations.Nullable Player player, @NotNull ItemStack stack) {
         Direction facing = player == null ? Direction.SOUTH : player.getDirection();
         for (Direction direction : Iterate.horizontalDirections) {
             state = state.setValue(byDirection(direction), direction.getAxis() != facing.getAxis());
@@ -38,7 +39,6 @@ public class CopycatCatwalkItem extends BlockItem {
         state = state.setValue(DOWN, true);
         state = state.setValue(UP, false);
         world.setBlockAndUpdate(pos, state);
-        return super.updateCustomBlockEntityTag(pos, world, player, stack, state);
     }
 
 }

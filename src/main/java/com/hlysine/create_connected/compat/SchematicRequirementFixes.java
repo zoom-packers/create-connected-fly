@@ -3,7 +3,7 @@ package com.hlysine.create_connected.compat;
 import com.zurrtum.create.api.schematic.requirement.SchematicRequirementRegistries;
 import com.zurrtum.create.content.schematics.requirement.ItemRequirement;
 import com.zurrtum.create.content.schematics.requirement.ItemRequirement.ItemUseType;
-import net.fabricmc.loader.api.FabricLoader;
+import com.zurrtum.create.neoforge.Platform;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
@@ -30,7 +30,7 @@ public final class SchematicRequirementFixes {
     }
 
     public static void register() {
-        if (!FabricLoader.getInstance().isModLoaded(FARMERS_DELIGHT))
+        if (!Platform.isModLoaded(FARMERS_DELIGHT))
             return;
         SchematicRequirementRegistries.BLOCKS.registerProvider(SchematicRequirementFixes::richSoilFarmland);
     }

@@ -16,8 +16,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.JukeboxSong;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -60,7 +58,6 @@ public class PlayContraptionJukeboxPacket implements CustomPacketPayload {
 
     // Not an override: Fabric routes payloads through a registered receiver (CCClientPackets),
     // not through a method on the payload the way Catnip did.
-    @Environment(EnvType.CLIENT)
     public void handle(LocalPlayer player) {
         ClientLevel world = Minecraft.getInstance().level;
         if (world == null || !world.dimension().identifier().equals(level))

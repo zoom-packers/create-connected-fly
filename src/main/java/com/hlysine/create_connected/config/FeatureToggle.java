@@ -1,13 +1,13 @@
 package com.hlysine.create_connected.config;
 
+import net.neoforged.fml.loading.FMLEnvironment;
 import com.hlysine.create_connected.compat.CreateConnectedJEI;
 import com.hlysine.create_connected.compat.Mods;
 import com.hlysine.create_connected.mixin.featuretoggle.CreativeModeTabsAccessor;
 import com.hlysine.create_connected.foundation.registrate.NamedBuilder;
 import com.hlysine.create_connected.foundation.registrate.BlockEntry;
 import java.util.function.UnaryOperator;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 
@@ -164,7 +164,7 @@ public class FeatureToggle {
      * CreateConnectedJEI until the mod is known to be there.
      */
     static void refreshItemVisibility() {
-        if (FabricLoader.getInstance().getEnvironmentType() != EnvType.CLIENT)
+        if (!FMLEnvironment.getDist().isClient())
             return;
 
         CreativeModeTab.ItemDisplayParameters cachedParameters = CreativeModeTabsAccessor.getCACHED_PARAMETERS();

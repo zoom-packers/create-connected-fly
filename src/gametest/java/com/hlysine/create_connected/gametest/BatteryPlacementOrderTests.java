@@ -5,7 +5,6 @@ import com.hlysine.create_connected.content.kineticbattery.KineticBatteryBlockEn
 import com.hlysine.create_connected.registries.CCBlocks;
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.content.kinetics.base.KineticBlockEntity;
-import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -27,8 +26,7 @@ public class BatteryPlacementOrderTests {
     private static final BlockPos NEAR = new BlockPos(4, 1, 3);
     private static final BlockPos FAR = new BlockPos(3, 1, 3);
 
-    @GameTest(maxTicks = 100)
-    public void deployerPlacedAgainstRunningBattery(GameTestHelper helper) {
+    public static void deployerPlacedAgainstRunningBattery(GameTestHelper helper) {
         placeRunningBattery(helper);
         helper.runAfterDelay(10, () -> {
             placeDeployerLikeAPlayer(helper, NEAR);
@@ -39,8 +37,7 @@ public class BatteryPlacementOrderTests {
         });
     }
 
-    @GameTest(maxTicks = 100)
-    public void deployerMovedIntoTheShaftsPlace(GameTestHelper helper) {
+    public static void deployerMovedIntoTheShaftsPlace(GameTestHelper helper) {
         placeRunningBattery(helper);
         helper.setBlock(NEAR, AllBlocks.SHAFT.defaultBlockState().setValue(BlockStateProperties.AXIS, Direction.Axis.X));
         helper.runAfterDelay(10, () -> {

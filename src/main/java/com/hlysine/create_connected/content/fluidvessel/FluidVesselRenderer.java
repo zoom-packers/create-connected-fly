@@ -206,7 +206,7 @@ public class FluidVesselRenderer implements BlockEntityRenderer<FluidVesselBlock
         public void submit(PoseStack matrices, SubmitNodeCollector queue) {
             matrices.pushPose();
             if (yRot != null)
-                matrices.mulPose(yRot);
+                matrices.rotate(yRot);
             matrices.translate(offsetX, -0.5f, -0.5f);
             gauge.submit(matrices, queue);
             if (dialRot != null)

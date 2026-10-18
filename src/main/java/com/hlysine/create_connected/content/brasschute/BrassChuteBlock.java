@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.brasschute;
 
+import net.minecraft.util.Prediction;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.content.logistics.chute.ChuteBlock;
@@ -58,7 +59,7 @@ public class BrassChuteBlock extends ChuteBlock {
             if (be.getItem().isEmpty())
                 return InteractionResult.TRY_WITH_EMPTY_HAND;
             player.getInventory()
-                    .placeItemBackInInventory(be.getItem());
+                    .placeItemBackInInventory(be.getItem(), Prediction.SERVER_ONLY);
             be.setItem(ItemStack.EMPTY);
             return InteractionResult.SUCCESS;
         });

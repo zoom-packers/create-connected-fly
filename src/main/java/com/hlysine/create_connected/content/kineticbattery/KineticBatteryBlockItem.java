@@ -2,8 +2,7 @@ package com.hlysine.create_connected.content.kineticbattery;
 
 import com.hlysine.create_connected.ConnectedLang;
 import com.hlysine.create_connected.registries.CCDataComponents;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;

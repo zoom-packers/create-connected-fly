@@ -41,12 +41,13 @@ public class FluidVesselItem extends BlockItem {
 		return initialResult;
 	}
 
+	// NeoForge 26.3: BlockItem#updateCustomBlockEntityTag is static now; fix the stack before it is applied
 	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos blockPos, Level level, Player player,
-												 ItemStack itemStack, BlockState blockState) {
-		MinecraftServer minecraftserver = level.getServer();
+	protected boolean placeBlock(BlockPlaceContext context, BlockState blockState) {
+		ItemStack itemStack = context.getItemInHand();
+		MinecraftServer minecraftserver = context.getLevel().getServer();
 		if (minecraftserver == null)
-			return false;
+			return super.placeBlock(context, blockState);
 		// BLOCK_ENTITY_DATA holds a TypedEntityData now, which carries the block entity type
 		// itself -- so the separate BlockEntity.addEntityType call is gone.
 		TypedEntityData<BlockEntityType<?>> blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
@@ -69,7 +70,7 @@ public class FluidVesselItem extends BlockItem {
 					TypedEntityData.of(((IBE<?>) this.getBlock()).getBlockEntityType(), nbt)
 			);
 		}
-		return super.updateCustomBlockEntityTag(blockPos, level, player, itemStack, blockState);
+		return super.placeBlock(context, blockState);
 	}
 
 	private void tryMultiPlace(BlockPlaceContext ctx) {

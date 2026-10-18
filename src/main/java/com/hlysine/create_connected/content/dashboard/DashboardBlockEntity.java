@@ -8,8 +8,6 @@ import com.mojang.serialization.DynamicOps;
 import com.zurrtum.create.foundation.blockEntity.SmartBlockEntity;
 import com.zurrtum.create.api.behaviour.BlockEntityBehaviour;
 import com.zurrtum.create.api.behaviour.display.DisplayHolder;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import com.zurrtum.create.catnip.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,7 +31,7 @@ import java.util.List;
 
 public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHolder {
 
-    SignText text = new SignText().setColor(DyeColor.WHITE);
+    SignText text = SignText.EMPTY.withColor(DyeColor.WHITE);
     int cycleTimer = 0;
     boolean wasDisplaying;
     /**
@@ -73,13 +71,13 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
     }
 
     public void setLine(int line, Component text) {
-        this.setText(this.getText().setMessage(line, text));
+        this.setText(this.getText().asMutable().setLine(line, text).asImmutable());
     }
 
     public void clearText() {
         SignText text = this.getText();
         for (int i = 0; i < SignText.LINES; i++) {
-            text = text.setMessage(i, Component.empty());
+            text = text.asMutable().setLine(i, Component.empty()).asImmutable();
         }
         this.setText(text);
     }
@@ -102,7 +100,7 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
         MutableComponent status = Component.empty();
         boolean needSpacer = false;
         for (int i = 0; i < SignText.LINES; i++) {
-            Component line = this.text.getMessage(i, false);
+            Component line = this.text.getMessages(false).get(i);
             if (line.getString().isEmpty()) continue;
             if (needSpacer)
                 status.append("   ");
@@ -138,7 +136,6 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
         return list;
     }
 
-    @Environment(EnvType.CLIENT)
     private boolean displayStatus() {
         BlockPos seatPos = getSeatPos();
         if (seatPos == null)
@@ -192,12 +189,12 @@ public class DashboardBlockEntity extends SmartBlockEntity implements DisplayHol
         super.write(tag, clientPacket);
         // ValueOutput drives the codec itself, so the registry-aware DynamicOps this used to build
         // by hand is gone -- the view already carries the lookup.
-        tag.store("text", SignText.DIRECT_CODEC, this.text);
+        tag.store("text", SignText.CODEC, this.text);
     }
 
     @Override
     protected void read(ValueInput tag, boolean clientPacket) {
         super.read(tag, clientPacket);
-        tag.read("text", SignText.DIRECT_CODEC).ifPresent(signText -> this.text = signText);
+        tag.read("text", SignText.CODEC).ifPresent(signText -> this.text = signText);
     }
 }

@@ -1,10 +1,10 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
+import net.neoforged.fml.loading.FMLEnvironment;
 import com.hlysine.create_connected.ConnectedLang;
 import com.zurrtum.create.catnip.data.Pair;
 import com.zurrtum.create.client.catnip.outliner.Outliner;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -13,8 +13,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 
 public class KineticBridgeBlockItem extends BlockItem {
 
@@ -28,12 +26,11 @@ public class KineticBridgeBlockItem extends BlockItem {
         // Catnip's platform abstraction did not survive the Fabric rewrite; the loader's own
         // environment check is the physical-side guard now.
         if (result == InteractionResult.FAIL && ctx.getLevel().isClientSide()
-                && FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+                && FMLEnvironment.getDist().isClient())
             showBounds(ctx);
         return result;
     }
 
-    @Environment(EnvType.CLIENT)
     public void showBounds(BlockPlaceContext context) {
         BlockPos pos = context.getClickedPos();
         Direction facing = ((KineticBridgeBlock) getBlock()).getDirectionForPlacement(context);

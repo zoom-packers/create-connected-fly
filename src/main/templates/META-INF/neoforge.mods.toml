@@ -1,0 +1,54 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "${mod_license} with additional terms (see LICENSE)"
+issueTrackerURL = "https://github.com/zoom-packers/create-connected-fly/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+iconFile = "create_connected_icon.png"
+authors = "${mod_authors}; GravisLudio (Fabric 26.2 Fly port); Zoom Packers (NeoForge 26.3 port)"
+credits = "Create Fly by ZurrTum; Create by the Creators of Create"
+displayURL = "https://github.com/hlysine/create_connected"
+description = '''
+${mod_description}
+Original: https://github.com/hlysine/create_connected
+'''
+
+[[mixins]]
+config = "create_connected.mixins.json"
+
+[[mixins]]
+config = "create_connected.client.mixins.json"
+
+[[accessTransformers]]
+file = "META-INF/accesstransformer.cfg"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "create"
+type = "required"
+versionRange = "${create_version_range}"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "jei"
+type = "optional"
+versionRange = "[31.15,)"
+ordering = "NONE"
+side = "CLIENT"

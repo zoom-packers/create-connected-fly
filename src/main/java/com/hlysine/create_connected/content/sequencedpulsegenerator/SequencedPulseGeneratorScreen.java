@@ -15,7 +15,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.Vector;
 import java.util.function.Function;
@@ -181,7 +181,7 @@ public class SequencedPulseGeneratorScreen extends AbstractSimiScreen {
         ListTag serialized = Instruction.serializeAll(instructions);
         if (serialized.equals(compareTag))
             return;
-        ClientPlayNetworking.send(new ConfigureSequencedPulseGeneratorPacket(be.getBlockPos(), serialized));
+        ClientPacketDistributor.sendToServer(new ConfigureSequencedPulseGeneratorPacket(be.getBlockPos(), serialized));
     }
 
     @Override

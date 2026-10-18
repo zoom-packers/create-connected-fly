@@ -1,5 +1,7 @@
 # Porting notes
 
+> **Zoompack 5 branch `zp5/26.3`:** this branch is the NeoForge 26.3 port. Read [PORTING-NEOFORGE.md](PORTING-NEOFORGE.md) first; this file is GravisLudio's Fabric 26.2 document and stays accurate for everything that is not about the loader.
+
 Working document for the port of **Create: Connected** from NeoForge 1.21.1 to **Fabric / Minecraft 26.2**, targeting [Create Fly](https://github.com/ZurrTum/Create-Fly).
 
 Written to be read cold. If you are picking this up with no context, read *State* and *Traps* first.

@@ -9,61 +9,85 @@ import com.hlysine.create_connected.foundation.registrate.CCRegistrate;
 import com.hlysine.create_connected.compat.SchematicRequirementFixes;
 import com.hlysine.create_connected.registries.*;
 import com.mojang.logging.LogUtils;
-import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
 
 /**
- * Fabric main entrypoint (was a NeoForge {@code @Mod} class).
+ * NeoForge entrypoint (the Fabric port's {@code ModInitializer}).
  * <p>
- * NeoForge deferred everything through an event bus: registries fired on {@code RegisterEvent},
- * setup on {@code FMLCommonSetupEvent}. Fabric has no such bus -- {@code onInitialize} already runs
- * at the right point in load, and {@link CCRegistrate} registers eagerly, so those phases collapse
- * into straight-line calls here. Order still matters: blocks before block entities, because
+ * Registration is split in two, following the Create port this builds on:
+ * <ul>
+ *   <li>{@link #registerContent()} adds everything that goes into a registry. NeoForge freezes the
+ *   vanilla registries at the end of bootstrap, before any mod is constructed, and Create registers its
+ *   own content just before that freeze ({@code Create.register()}). {@code mixin.BuiltInRegistriesMixin}
+ *   calls this method right after it, inside {@code BuiltInRegistries.freeze()}, so Connected's blocks exist before
+ *   Create's freeze-time hooks sort arm interaction point and fan processing types, and before the
+ *   client entrypoint binds renderers and models to them.</li>
+ *   <li>The constructor wires up what Fabric API did: payloads, NeoForge-registry entries (condition
+ *   codecs, attachment types), events and the config.</li>
+ * </ul>
+ * Order inside {@link #registerContent()} is the Fabric port's: blocks before block entities, because
  * {@code validBlocks} resolves actual Block instances.
- * <p>
- * TODO: {@code setTooltipModifierFactory} and {@code setCreativeTab} came from Create's
- * CreateRegistrate. Both are presentation concerns -- tooltips are client-side, and creative tab
- * contents go through Fabric's {@code ItemGroupEvents} -- so they are not wired here yet.
  */
-public class CreateConnected implements ModInitializer {
+@Mod(CreateConnected.MODID)
+public class CreateConnected {
     public static final String MODID = "create_connected";
     public static final Logger LOGGER = LogUtils.getLogger();
 
     private static final CCRegistrate REGISTRATE = CCRegistrate.create(MODID);
 
-    @Override
-    public void onInitialize() {
+    private static boolean contentRegistered;
+
+    public CreateConnected(IEventBus modBus, ModContainer container) {
+        if (!contentRegistered)
+            throw new IllegalStateException("Create: Connected content was not registered during bootstrap; "
+                    + "is mixin BuiltInRegistriesMixin applied?");
+
+        // Must come after every registry, as it did upstream. Two configs build their entries from
+        // lists the block builders fill as they register: CStress from the defaults that
+        // .transform(CStress.setImpact/setCapacity) records, CFeatures from the keys
+        // FeatureToggle.register() collects. Create builds its own configs here too (Create#onInitialize).
+        CCConfigs.register();
+
+        CCCraftingConditions.register(modBus);
+        GoggleSlot.registerEvents(modBus);
+        modBus.addListener(CCPackets::register);
+        modBus.addListener(CCCreativeTabs::hideDisabled);
+        modBus.addListener(CCBlockEntityTypes::addCopycatBlocks);
+
+        // Was an @EventBusSubscriber class upstream.
+        LinkWildcardNetworkHandler.register();
+    }
+
+    /**
+     * Registers every registry entry. Called once, during vanilla bootstrap, from
+     * {@code mixin.BuiltInRegistriesMixin}.
+     */
+    public static void registerContent() {
+        if (contentRegistered)
+            throw new IllegalStateException("Create: Connected content registered twice");
+        contentRegistered = true;
+
         CCSoundEvents.register();
         CCDataComponents.register();
         CCBlocks.register();
         CCItems.register();
         CCBlockEntityTypes.register();
         CCCreativeTabs.register();
-        CCPackets.register();
-        CCCraftingConditions.register();
         CCArmInteractionPointTypes.register();
-        // Original to this port: a goggles-only equipment slot. Must come before CCConfigs like
-        // the registries above, because it registers a feature toggle and the config is built
-        // from the toggles collected by then.
+        // Original to the Fabric port: a goggles-only equipment slot. Registers a feature toggle, so it
+        // has to run before CCConfigs is built.
         GoggleSlot.register();
 
-        // Must come after every registry above, as it did upstream. Two configs build their entries
-        // from lists the block builders fill as they register: CStress from the defaults that
-        // .transform(CStress.setImpact/setCapacity) records, CFeatures from the keys
-        // FeatureToggle.register() collects. The port had moved this to the top of onInitialize,
-        // so both were built from empty lists -- every Connected block had no stress impact and no
-        // capacity (the Kinetic Battery neither charged nor discharged), and no feature could be
-        // toggled off. Nothing above reads our config while registering, so this order is safe.
-        CCConfigs.register();
-
-        // Previously ran from FMLCommonSetupEvent. Nothing here needs a deferred phase on Fabric:
-        // every registry these touch is already populated by the calls above.
+        // Previously ran from FMLCommonSetupEvent upstream.
         CCInteractionBehaviours.register();
         CCMovementBehaviours.register();
         CCMountedStorageTypes.register();
         // Mounted storage is the contraption side; CCTransfer is the world side, and publishes the
-        // same inventories to fabric-transfer-api-v1 so that Jade and other mods can read them.
+        // same inventories as NeoForge capabilities so that Jade and other mods can read them.
         CCTransfer.register();
         CCDisplaySources.register();
         CCDisplayTargets.register();
@@ -71,17 +95,13 @@ public class CreateConnected implements ModInitializer {
         CCInventoryIdentifiers.register();
         SchematicRequirementFixes.register();
 
-        // Were keyed off RegisterEvent for a specific registry; now called directly.
+        // Were keyed off RegisterEvent for a specific registry upstream; now called directly.
         CCItemAttributes.register();
         CCAdvancements.register();
         CCTriggers.register();
 
-        // Was an @EventBusSubscriber class; Fabric needs the level hooks registered explicitly.
-        LinkWildcardNetworkHandler.register();
-
         // Copycats+ and Additional Placements integrations are excluded from the build until
-        // those mods exist on 26.2 -- see the sourceSets excludes in build.gradle. Their source
-        // is still in compat/, so re-enabling is a one-line change per mod.
+        // those mods exist on 26.3 -- see the sourceSets excludes in build.gradle.
     }
 
     public static CCRegistrate getRegistrate() {

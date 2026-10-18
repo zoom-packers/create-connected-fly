@@ -85,11 +85,11 @@ public class DashboardRenderer implements BlockEntityRenderer<DashboardBlockEnti
         ps.pushPose();
 
         ps.translate(0.5, 0.5, 0.5);
-        ps.mulPose(Axis.YP.rotationDegrees(-state.facing.toYRot()));
+        ps.rotate(Axis.YP.rotationDegrees(-state.facing.toYRot()));
         ps.translate(-0.5, -0.5, -0.5);
 
         ps.translate(0.5, 12 / 16f, 9 / 16f);
-        ps.mulPose(Axis.XP.rotationDegrees(-66.80141f));
+        ps.rotate(Axis.XP.rotationDegrees(-66.80141f));
         ps.translate(0, 3.5 / 16f, 0.15 / 16f);
 
         float scale = 0.015625f * 0.52f;

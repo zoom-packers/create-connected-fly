@@ -1,13 +1,13 @@
 {
-  "fabric:load_conditions": [
+  "neoforge:conditions": [
     {
-      "condition": "create_connected:feature_enabled",
+      "type": "create_connected:feature_enabled",
       "tag": "create_connected:copycat_beam"
     },
     {
-      "condition": "fabric:not",
+      "type": "neoforge:not",
       "value": {
-        "condition": "create_connected:feature_enabled_in_copycats",
+        "type": "create_connected:feature_enabled_in_copycats",
         "tag": "create_connected:copycat_beam"
       }
     }
@@ -26,7 +26,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "create_connected:crafting/palettes/copycat_beam"
+        "recipes": "create_connected:crafting/palettes/copycat_beam"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

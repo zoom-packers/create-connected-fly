@@ -21,7 +21,7 @@ import com.hlysine.create_connected.content.sixwaygearbox.SixWayGearboxVisual;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.zurrtum.create.client.AllBlockEntityRenders;
 import com.zurrtum.create.client.content.kinetics.simpleRelays.BracketedKineticBlockEntityRenderer;
-import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedCogVisual;
+import com.zurrtum.create.client.content.kinetics.simpleRelays.encased.EncasedSmallCogVisual;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftRenderer;
 import com.zurrtum.create.client.content.kinetics.transmission.SplitShaftVisual;
 import com.zurrtum.create.client.content.logistics.chute.ChuteRenderer;
@@ -70,7 +70,7 @@ public final class CCBlockEntityRenders {
     }
 
     public static void register() {
-        AllBlockEntityRenders.visual(CCBlockEntityTypes.ENCASED_CHAIN_COGWHEEL.get(), ChainCogwheelRenderer::new, EncasedCogVisual::small);
+        AllBlockEntityRenders.visual(CCBlockEntityTypes.ENCASED_CHAIN_COGWHEEL.get(), ChainCogwheelRenderer::new, EncasedSmallCogVisual::new);
         AllBlockEntityRenders.visual(CCBlockEntityTypes.CRANK_WHEEL.get(), CrankWheelRenderer::new, CrankWheelVisual::new);
         AllBlockEntityRenders.visual(CCBlockEntityTypes.PARALLEL_GEARBOX.get(), ParallelGearboxRenderer::new, ParallelGearboxVisual::new);
         AllBlockEntityRenders.visual(CCBlockEntityTypes.SIX_WAY_GEARBOX.get(), SixWayGearboxRenderer::new, SixWayGearboxVisual::new);

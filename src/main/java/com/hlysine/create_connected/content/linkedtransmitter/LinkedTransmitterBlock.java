@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.linkedtransmitter;
 
+import net.neoforged.fml.loading.FMLEnvironment;
 import com.hlysine.create_connected.registries.CCShapes;
 import net.minecraft.advancements.triggers.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
@@ -26,8 +27,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
+
 
 public interface LinkedTransmitterBlock {
     Block getBlock();
@@ -55,7 +55,7 @@ public interface LinkedTransmitterBlock {
      * wins, since that is the part this block adds over its base.
      */
     default boolean isHittingBase(BlockState state, BlockGetter level, BlockPos pos) {
-        if (FabricLoader.getInstance().getEnvironmentType() != EnvType.CLIENT)
+        if (!FMLEnvironment.getDist().isClient())
             return false;
         HitResult hit = ClientHitResultAccess.get();
         return hit != null && isHittingBase(state, level, pos, hit);
@@ -84,7 +84,7 @@ public interface LinkedTransmitterBlock {
             return InteractionResult.SUCCESS;
         }
         if (stack.is(ItemTags.AXES) && state.getValue(BlockStateProperties.LOCKED)) {
-            level.playSound(player, pos, SoundEvents.AXE_WAX_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level.playSound(player, pos, SoundEvents.AXE_WAX_OFF.value(), SoundSource.BLOCKS, 1.0F, 1.0F);
             level.levelEvent(player, 3004, pos, 0);
             if (player instanceof ServerPlayer) {
                 CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger((ServerPlayer) player, pos, stack);

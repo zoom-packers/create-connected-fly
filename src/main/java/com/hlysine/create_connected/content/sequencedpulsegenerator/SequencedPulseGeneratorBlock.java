@@ -1,5 +1,6 @@
 package com.hlysine.create_connected.content.sequencedpulsegenerator;
 
+import net.neoforged.fml.loading.FMLEnvironment;
 import com.hlysine.create_connected.registries.CCBlockEntityTypes;
 import com.hlysine.create_connected.datagen.advancements.AdvancementBehaviour;
 import com.mojang.serialization.MapCodec;
@@ -10,8 +11,7 @@ import com.zurrtum.create.content.redstone.diodes.PoweredLatchBlock;
 import com.zurrtum.create.foundation.block.IBE;
 import com.zurrtum.create.foundation.block.RedStoneConnectBlock;
 import com.zurrtum.create.client.catnip.gui.ScreenOpener;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,8 +33,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.NotNull;
 
 // canConnectRedstone is Create Fly's own RedStoneConnectBlock hook now, not a vanilla override.
@@ -42,7 +40,6 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
     public static final BooleanProperty POWERING = BrassDiodeBlock.POWERING;
     public static final BooleanProperty POWERED_SIDE = PoweredLatchBlock.POWERED_SIDE;
 
-    public static final MapCodec<SequencedPulseGeneratorBlock> CODEC = simpleCodec(SequencedPulseGeneratorBlock::new);
 
     public SequencedPulseGeneratorBlock(Properties properties) {
         super(properties);
@@ -53,10 +50,6 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
         );
     }
 
-    @Override
-    protected @NotNull MapCodec<? extends DiodeBlock> codec() {
-        return CODEC;
-    }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
@@ -153,7 +146,7 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
         }
 
         // Catnip's platform abstraction is gone; the loader's environment check is the guard now.
-        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+        if (FMLEnvironment.getDist().isClient())
             withBlockEntityDo(level, pos, be -> this.displayScreen(be, player));
         return InteractionResult.SUCCESS;
     }
@@ -165,12 +158,11 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
                                                      @NotNull Player player,
                                                      @NotNull BlockHitResult hit) {
         // Catnip's platform abstraction is gone; the loader's environment check is the guard now.
-        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+        if (FMLEnvironment.getDist().isClient())
             withBlockEntityDo(worldIn, pos, be -> this.displayScreen(be, player));
         return InteractionResult.SUCCESS;
     }
 
-    @Environment(EnvType.CLIENT)
     protected void displayScreen(SequencedPulseGeneratorBlockEntity be, Player player) {
         if (player instanceof LocalPlayer)
             ScreenOpener.open(new SequencedPulseGeneratorScreen(be));
