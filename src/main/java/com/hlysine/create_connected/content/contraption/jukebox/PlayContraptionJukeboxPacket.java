@@ -2,23 +2,14 @@ package com.hlysine.create_connected.content.contraption.jukebox;
 
 import com.hlysine.create_connected.registries.CCPackets;
 import com.mojang.datafixers.util.Function7;
-import com.zurrtum.create.content.contraptions.AbstractContraptionEntity;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.JukeboxSong;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 public class PlayContraptionJukeboxPacket implements CustomPacketPayload {
@@ -56,41 +47,15 @@ public class PlayContraptionJukeboxPacket implements CustomPacketPayload {
         return CCPackets.PLAY_CONTRAPTION_JUKEBOX;
     }
 
-    // Not an override: Fabric routes payloads through a registered receiver (CCClientPackets),
-    // not through a method on the payload the way Catnip did.
-    public void handle(LocalPlayer player) {
-        ClientLevel world = Minecraft.getInstance().level;
-        if (world == null || !world.dimension().identifier().equals(level))
-            return;
-        if (!world.isLoaded(worldPos))
-            return;
-        Entity entity = world.getEntity(contraptionId);
-        if (!(entity instanceof AbstractContraptionEntity contraptionEntity))
-            return;
-        if (play) {
-            Optional<JukeboxSong> song = world.registryAccess()
-                    .lookupOrThrow(Registries.JUKEBOX_SONG)
-                    .get(recordId)
-                    .map(Holder.Reference::value);
-            if (song.isEmpty())
-                return;
-            ContraptionMusicManager.playContraptionMusic(
-                    song.get(),
-                    contraptionEntity,
-                    contraptionPos,
-                    worldPos,
-                    silent
-            );
-        } else {
-            ContraptionMusicManager.playContraptionMusic(
-                    null,
-                    contraptionEntity,
-                    contraptionPos,
-                    worldPos,
-                    silent
-            );
-        }
-    }
+    // ZP5 port: the client handling moved to CCClientHooks.playContraptionJukebox, so this payload class stays
+    // loadable on a dedicated server (it used to name LocalPlayer and ClientLevel here)
+    public Identifier level() { return level; }
+    public int contraptionId() { return contraptionId; }
+    public BlockPos contraptionPos() { return contraptionPos; }
+    public BlockPos worldPos() { return worldPos; }
+    public int recordId() { return recordId; }
+    public boolean play() { return play; }
+    public boolean silent() { return silent; }
 
     private static <B, C, T1, T2, T3, T4, T5, T6, T7> StreamCodec<B, C> composite(
             final StreamCodec<? super B, T1> codec1,

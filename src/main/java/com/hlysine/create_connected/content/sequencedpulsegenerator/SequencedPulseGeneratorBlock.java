@@ -10,9 +10,7 @@ import com.zurrtum.create.content.redstone.diodes.BrassDiodeBlock;
 import com.zurrtum.create.content.redstone.diodes.PoweredLatchBlock;
 import com.zurrtum.create.foundation.block.IBE;
 import com.zurrtum.create.foundation.block.RedStoneConnectBlock;
-import com.zurrtum.create.client.catnip.gui.ScreenOpener;
 
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -164,8 +162,8 @@ public class SequencedPulseGeneratorBlock extends AbstractDiodeBlock implements 
     }
 
     protected void displayScreen(SequencedPulseGeneratorBlockEntity be, Player player) {
-        if (player instanceof LocalPlayer)
-            ScreenOpener.open(new SequencedPulseGeneratorScreen(be));
+        // ZP5 port: the screen lives in CCClientHooks so a dedicated server never verifies Screen/LocalPlayer here
+        com.hlysine.create_connected.client.CCClientHooks.openSequencedPulseGeneratorScreen(be, player);
     }
 
     @Override

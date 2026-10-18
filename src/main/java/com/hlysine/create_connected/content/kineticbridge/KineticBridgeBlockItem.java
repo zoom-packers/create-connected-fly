@@ -1,18 +1,11 @@
 package com.hlysine.create_connected.content.kineticbridge;
 
 import net.neoforged.fml.loading.FMLEnvironment;
-import com.hlysine.create_connected.ConnectedLang;
-import com.zurrtum.create.catnip.data.Pair;
-import com.zurrtum.create.client.catnip.outliner.Outliner;
 
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.phys.AABB;
 
 public class KineticBridgeBlockItem extends BlockItem {
 
@@ -32,15 +25,8 @@ public class KineticBridgeBlockItem extends BlockItem {
     }
 
     public void showBounds(BlockPlaceContext context) {
-        BlockPos pos = context.getClickedPos();
-        Direction facing = ((KineticBridgeBlock) getBlock()).getDirectionForPlacement(context);
-        if (!(context.getPlayer() instanceof LocalPlayer localPlayer))
-            return;
-        Outliner.getInstance().showAABB(Pair.of("kinetic_bridge", pos), new AABB(pos).expandTowards(facing.getUnitVec3i().getX(), facing.getUnitVec3i().getY(), facing.getUnitVec3i().getZ()))
-                .colored(0xFF_ff5d6c);
-        ConnectedLang.translate("kinetic_bridge.not_enough_space")
-                .color(0xFF_ff5d6c)
-                .sendStatus(localPlayer);
+        // ZP5 port: client-only work lives in CCClientHooks so a dedicated server never verifies LocalPlayer here
+        com.hlysine.create_connected.client.CCClientHooks.showKineticBridgeBounds((KineticBridgeBlock) getBlock(), context);
     }
 
 }
