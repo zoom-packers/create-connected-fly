@@ -63,9 +63,16 @@ public final class GoggleSlotScreen {
     private GoggleSlotScreen() {
     }
 
-    /** NeoForge: game-bus screen events, filtered to the two inventory screens. */
+    /**
+     * NeoForge: game-bus screen events, filtered to the two inventory screens.
+     * <p>
+     * The slot is drawn in the container screen's foreground pass, after its slots and recipe book
+     * but before the carried stack and the item tooltips, which the screen draws on later strata --
+     * where a vanilla slot sits. {@code Render.Post} comes after the screen has flushed its tooltips
+     * on 26.3, so a slot drawn there showed through every tooltip that crossed it.
+     */
     public static void register() {
-        NeoForge.EVENT_BUS.addListener((ScreenEvent.Render.Post event) -> {
+        NeoForge.EVENT_BUS.addListener((ScreenEvent.Render.Foreground event) -> {
             if (isInventory(event.getScreen()))
                 extract(event.getScreen(), event.getGuiGraphics(), event.getMouseX(), event.getMouseY(), event.getPartialTick());
         });
@@ -127,6 +134,7 @@ public final class GoggleSlotScreen {
         ItemStack carried = screen instanceof AbstractContainerScreen<?> container
                 ? container.getMenu().getCarried() : ItemStack.EMPTY;
 
+        // Set here, the tooltip is drawn with the screen's own at the end of the frame, on top.
         if (isOver(pos, mouseX, mouseY)) {
             g.fill(x, y, x + 16, y + 16, HOVER);
             // Like vanilla: no tooltip while something is on the cursor.
@@ -140,16 +148,6 @@ public final class GoggleSlotScreen {
                                     .withStyle(net.minecraft.ChatFormatting.GRAY)
                     ), Optional.empty(), mouseX, mouseY);
             }
-        }
-
-        // This event runs after the screen has drawn everything, cursor stack included, so the slot
-        // above was painted over whatever the player is carrying -- which a vanilla slot never
-        // does. Draw the cursor stack again on top, where vanilla puts it (mouse minus 8), whenever
-        // it overlaps the slot or its creative panel.
-        int cx = mouseX - 8, cy = mouseY - 8;
-        if (!carried.isEmpty() && cx < x + 21 && cx + 16 > x - 5 && cy < y + 21 && cy + 16 > y - 5) {
-            g.item(carried, cx, cy);
-            g.itemDecorations(Minecraft.getInstance().font, carried, cx, cy);
         }
     }
 

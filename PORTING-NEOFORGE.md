@@ -51,7 +51,7 @@ API surface here was small: 35 files, all lifecycle, networking, attachments, ev
 ## Build
 
 - ModDevGradle 2.0.148, NeoForge 26.3.0.89, Gradle 9.2.1, JDK 25. `./gradlew build` →
-  `build/libs/create_connected-1.3.3-zp5.3+neoforge-26.3.jar` and a sources jar.
+  `build/libs/create_connected-1.3.3-zp5.4+neoforge-26.3.jar` and a sources jar.
 - **The Create port is a file dependency.** It has no published build yet, so `libs/` (gitignored) holds
   `create-fly-neoforge-6.0.9+neoforge-26.3.jar` and `create-interfaces.json` (its `interfaces.json`). Copy both from
   ZP5 `mods/create-fly-neoforge` (`build/libs/` and the repo root) before building. Switch to a maven coordinate once the
@@ -112,7 +112,7 @@ mixins are applied, so the class is never transformed.
 | `CreativeModeTabEvents.modifyOutputEvent` | `BuildCreativeModeTabContentsEvent` with `PARENT_AND_SEARCH_TABS` |
 | `AttachmentRegistry` (goggle slot) | NeoForge `AttachmentType` (`serialize` + `sync` to all players), `DeferredRegister` |
 | `UseItemCallback`, `ServerLivingEntityEvents.AFTER_DEATH`, `ServerPlayerEvents.COPY_FROM` | `PlayerInteractEvent.RightClickItem`, `LivingDeathEvent` (LOWEST), `PlayerEvent.Clone` |
-| `ScreenEvents.afterExtract`, `ScreenMouseEvents.allowMouseClick` | `ScreenEvent.Render.Post`, `ScreenEvent.MouseButtonPressed.Pre` |
+| `ScreenEvents.afterExtract`, `ScreenMouseEvents.allowMouseClick` | `ScreenEvent.Render.Foreground`, `ScreenEvent.MouseButtonPressed.Pre` |
 | `LivingEntityRenderLayerRegistrationCallback` | `EntityRenderersEvent.AddLayers` (player skins) |
 | `ServerLevelEvents.LOAD/UNLOAD` | `LevelEvent.Load/Unload`, server levels only |
 | `ClientLifecycleEvents.CLIENT_STOPPING` | `ClientStoppingEvent` |
@@ -144,6 +144,10 @@ mixins are applied, so the class is never transformed.
   Diagonal Fences/Radium compat mixins only apply when those mods are present (`require = 0` / `@Pseudo`).
 - **Goggle slot** stands down only when Trinkets is installed, which never happens on NeoForge. With Curios in the pack
   it still shows its own slot; the Create port has no Curios goggles yet.
+- **Goggle slot draw pass** (zp5.4): the slot is drawn in the container screen's foreground pass
+  (`ScreenEvent.Render.Foreground`), after the slots and recipe book and before the carried stack and item tooltips.
+  Up to zp5.3 it was drawn in `Render.Post`, which on 26.3 comes after the screen has flushed its tooltips, so the slot
+  showed through any item tooltip that crossed it (ZP5 bug #30) and had to redraw the carried stack over itself.
 - **Server → client config sync** is still the Fabric port's open TODO (`config/CCommon.java`).
 - **`KineticSourceTests`** (a 200k-tick survey of every shaft machine) only runs with
   `-Dcreate_connected.gametest.kineticSources=true`.
